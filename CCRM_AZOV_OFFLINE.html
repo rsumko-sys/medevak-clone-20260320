@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCRM • ВОВКИ ДА ВІНЧІ • OFFLINE</title>
+  <style>
+    :root {
+      --bg: #070c15;
+      --card: #121b2b;
+      --line: #24314a;
+      --text: #e7efff;
+      --muted: #95a9cb;
+      --accent: #bb9135;
+      --accent-2: #846724;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      color: var(--text);
+      background:
+        radial-gradient(980px 500px at 18% -10%, #1b2b44 0%, transparent 70%),
+        radial-gradient(700px 420px at 82% -10%, #2a241e 0%, transparent 70%),
+        linear-gradient(180deg, #05070d 0%, var(--bg) 100%);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+    }
+    .card {
+      width: min(860px, 100%);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(18, 29, 45, 0.96), rgba(14, 22, 34, 0.96));
+      padding: 1.2rem;
+    }
+    .eyebrow {
+      margin: 0;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+    }
+    h1 {
+      margin: 0.45rem 0 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+    }
+    .sub {
+      margin: 0 0 1rem;
+      color: #b4c2dd;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.78rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .item {
+      border: 1px solid var(--line);
+      background: #132035;
+      padding: 0.75rem;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .actions {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .btn {
+      border: 1px solid #94712a;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: #fff;
+      padding: 0.72rem 1rem;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .hint {
+      margin-top: 0.8rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid var(--line);
+      color: #d5e2f9;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">ВОВКИ ДА ВІНЧІ • МЕДИЧНИЙ ПІДРОЗДІЛ <span class="badge">offline</span></p>
+    <h1>CCRM / ВОВКИ ДА ВІНЧІ</h1>
+    <p class="sub">автономна сторінка без сервера</p>
+
+    <section class="grid">
+      <article class="item">Первинний огляд, карта ушкоджень, MARCH, вітальні показники, евакуація.</article>
+      <article class="item">Автономна робота, черга синхронізації, захист даних і журнал дій.</article>
+      <article class="item">Командний центр: поранені, запаси, кров, протоколи, експорт.</article>
+      <article class="item">Сумісність із роботою в полі: великі елементи, простий запуск, адаптивність.</article>
+    </section>
+
+    <div class="actions">
+      <a class="btn" href="./medevak_os.html">Відкрити локальний модуль</a>
+      <button class="btn" id="copyInfo">Скопіювати інструкцію</button>
+    </div>
+
+    <p class="hint" id="status">Ця версія не звертається до localhost і працює як звичайний офлайн HTML-файл.</p>
+  </main>
+
+  <script>
+    const status = document.getElementById('status');
+    const button = document.getElementById('copyInfo');
+
+    button.addEventListener('click', async () => {
+      const text = 'Офлайн-режим: відкрийте CCRM_AZOV_OFFLINE.html подвійним кліком. Сервер не потрібен.';
+
+      try {
+        await navigator.clipboard.writeText(text);
+        status.textContent = 'Інструкцію скопійовано в буфер обміну.';
+      } catch {
+        status.textContent = 'Не вдалося скопіювати автоматично. Текст: ' + text;
+      }
+    });
+  </script>
+</body>
+</html>

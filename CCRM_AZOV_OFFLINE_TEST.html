@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCRM ВОВКИ ДА ВІНЧІ OFFLINE TEST</title>
+  <style>
+    :root {
+      --bg: #090d14;
+      --panel: #171d2a;
+      --line: #384258;
+      --text: #edf1ff;
+      --muted: #b4bed8;
+      --accent: #b98e35;
+      --accent2: #7f6125;
+      --good: #38b27a;
+      --warn: #deb05b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1100px 600px at 15% -15%, #2e3b55 0%, transparent 72%),
+        radial-gradient(950px 520px at 88% -15%, #2f261a 0%, transparent 72%),
+        linear-gradient(180deg, #06080c 0%, var(--bg) 100%);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+    }
+    .header {
+      border: 1px solid var(--line);
+      background: rgba(22, 27, 38, 0.95);
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .title { margin: 0; letter-spacing: 0.09em; text-transform: uppercase; font-size: 1.2rem; }
+    .sub { margin: 4px 0 0; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.72rem; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #1d2433;
+      color: var(--text);
+    }
+    .badge.good { border-color: #2b7a58; color: #b3ffdd; }
+    .badge.warn { border-color: #856827; color: #ffe2a8; }
+
+    .tabs {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      background: #161e2d;
+    }
+    .tab {
+      flex: 1;
+      min-width: 180px;
+      border: 0;
+      border-right: 1px solid #3a465f;
+      border-bottom: 1px solid #3a465f;
+      background: #161e2d;
+      color: #b8c4de;
+      padding: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+    .tab.active { background: #262f44; color: #fff; border-bottom-color: var(--accent); }
+
+    .panel {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(26, 32, 46, 0.98), rgba(18, 24, 36, 0.98));
+      padding: 12px;
+    }
+    .hidden { display: none; }
+
+    .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .field { border: 1px solid var(--line); background: #21293a; padding: 10px; }
+    .label { display: block; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #4a5771;
+      background: #161f2d;
+      color: var(--text);
+      padding: 9px;
+      font-size: 0.9rem;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+
+    .btnRow { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      border: 1px solid #9a7a33;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color: #fff;
+      padding: 9px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+    .btn.secondary { border-color: #4b5872; background: #29344a; }
+
+    .bodymap {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      border: 1px solid var(--line);
+      background: #121a29;
+      padding: 8px;
+      overflow-x: auto;
+    }
+    .zone {
+      min-height: 76px;
+      border: 1px solid #4d5a75;
+      background: #202b40;
+      color: #d9e4ff;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      position: relative;
+    }
+    .zone.on { border-color: #c7a35a; box-shadow: inset 0 0 0 1px #c7a35a; }
+    .zone small {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      border: 1px solid #66738e;
+      padding: 1px 4px;
+      font-size: 0.56rem;
+      color: #d4dff8;
+      background: #172031;
+    }
+
+    .statRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .stat { border: 1px solid var(--line); background: #212a3c; padding: 10px; }
+    .stat b { font-size: 1.3rem; display: block; margin-top: 4px; }
+
+    .hint { color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
+
+    @media (max-width: 900px) {
+      .grid2 { grid-template-columns: 1fr; }
+      .bodymap { grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+      .statRow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="header">
+      <div>
+        <h1 class="title">CCRM ВОВКИ ДА ВІНЧІ • Офлайн тест</h1>
+        <p class="sub">Підрозділ: ВОВКИ ДА ВІНЧІ • офлайн симулятор функціоналу</p>
+      </div>
+      <div class="badges">
+        <span class="badge good">OFFLINE SIM</span>
+        <span class="badge">LOCAL STORAGE</span>
+        <span class="badge warn">NO BACKEND CALLS</span>
+      </div>
+    </section>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <section class="panel" id="view-S1">
+      <div class="grid2">
+        <div class="field">
+          <label class="label">Позивний</label>
+          <input id="callsign" placeholder="АЗОВ-01" />
+        </div>
+        <div class="field">
+          <label class="label">Тріаж</label>
+          <select id="triage">
+            <option>IMMEDIATE</option>
+            <option>DELAYED</option>
+            <option>MINIMAL</option>
+            <option>EXPECTANT</option>
+            <option>DECEASED</option>
+          </select>
+        </div>
+        <div class="field" style="grid-column: 1 / -1;">
+          <label class="label">Нотатки</label>
+          <textarea id="notes" placeholder="Первинні дані, зауваги, попередні правки"></textarea>
+        </div>
+      </div>
+      <div class="btnRow">
+        <button class="btn" data-next="S2">Далі до карти тіла</button>
+        <button class="btn secondary" id="resetS1">Очистити S1</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="view-S2">
+      <p class="hint">Натискайте блоки тіла. Маркер на блоці означає зафіксоване ушкодження. Це симуляція інтерфейсу, дані зберігаються тільки локально.</p>
+      <div class="bodymap" id="bodymap"></div>
+      <div class="btnRow">
+        <button class="btn secondary" data-prev="S1">Назад</button>
+        <button class="btn" data-next="S3">Далі до MARCH</button>
+        <button class="btn secondary" id="resetS2">Очистити карту</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="view-S3">
+      <div class="grid2">
+        <div class="field"><label class="label">M Massive Bleeding</label><select id="m_bleed"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label class="label">A Airway</label><select id="a_airway"><option>Patent</option><option>Compromised</option></select></div>
+        <div class="field"><label class="label">R Respiration</label><select id="r_resp"><option>Stable</option><option>Unstable</option></select></div>
+        <div class="field"><label class="label">C Circulation</label><select id="c_circ"><option>Stable</option><option>Shock</option></select></div>
+      </div>
+      <div class="btnRow">
+        <button class="btn secondary" data-prev="S2">Назад</button>
+        <button class="btn" data-next="S4">Далі до дій</button>
+        <button class="btn secondary" id="resetS3">Скинути MARCH</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="view-S4">
+      <div class="grid2">
+        <div class="field"><label class="label">HR</label><input id="v_hr" type="number" placeholder="82" /></div>
+        <div class="field"><label class="label">SpO2</label><input id="v_spo2" type="number" placeholder="95" /></div>
+        <div class="field" style="grid-column: 1 / -1;"><label class="label">Дії</label><textarea id="actions" placeholder="Медикаменти, процедури"></textarea></div>
+      </div>
+      <div class="btnRow">
+        <button class="btn secondary" data-prev="S3">Назад</button>
+        <button class="btn" data-next="S5">Далі до евак</button>
+        <button class="btn secondary" id="resetS4">Очистити S4</button>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="view-S5">
+      <div class="grid2">
+        <div class="field"><label class="label">Пріоритет евакуації</label><select id="evac"><option>URGENT</option><option>PRIORITY</option><option>ROUTINE</option></select></div>
+        <div class="field"><label class="label">MIST summary</label><input id="mist" placeholder="Auto summary (offline draft)" /></div>
+      </div>
+      <div class="statRow">
+        <div class="stat"><span class="label">Pending</span><b id="sPending">0</b></div>
+        <div class="stat"><span class="label">Acked</span><b id="sAcked">0</b></div>
+        <div class="stat"><span class="label">Dead letter (sim)</span><b id="sDead">0</b></div>
+      </div>
+      <div class="btnRow">
+        <button class="btn secondary" data-prev="S4">Назад</button>
+        <button class="btn" id="saveDraft">Зберегти офлайн кейс</button>
+        <button class="btn secondary" id="forceSync">Тест примусової реплікації</button>
+        <button class="btn secondary" id="resetAll">Скинути весь кейс</button>
+      </div>
+      <p class="hint" id="status">Офлайн режим: всі дії в localStorage. Це тестовий симулятор, не бойовий контур реплікації.</p>
+    </section>
+
+    <section class="panel">
+      <p class="hint"><b>Важливо:</b> файл призначений для ознайомлення з UX-потоком S1-S5 і попередніми правками. Політики мережі, auth, реальна синхронізація та API тут не виконуються.</p>
+    </section>
+  </div>
+
+  <script>
+    const KEY = 'azov_offline_test_case_v1';
+    const tabs = [
+      { id: 'S1', name: '1 Введення' },
+      { id: 'S2', name: '2 Карта тіла' },
+      { id: 'S3', name: '3 MARCH' },
+      { id: 'S4', name: '4 Дії/Вітальні' },
+      { id: 'S5', name: '5 Евак/Синх' }
+    ];
+
+    const zones = [
+      ['ГОЛОВА', 'A'], ['ШИЯ', 'A'], ['ГРУДИ Л', 'R'], ['ГРУДИ Ц', 'R'], ['ГРУДИ П', 'R'],
+      ['Л ПЛЕЧЕ', 'M'], ['Л ПЕРЕДПЛІЧЧЯ', 'M'], ['Л КИСТЬ', 'M'], ['ЖИВІТ', 'C'], ['ТАЗ', 'C'],
+      ['П ПЛЕЧЕ', 'M'], ['П ПЕРЕДПЛІЧЧЯ', 'M'], ['П КИСТЬ', 'M'], ['Л СТЕГНО', 'M'], ['Л КОЛІНО', 'M'],
+      ['Л ГОМІЛКА', 'M'], ['Л СТОПА', 'M'], ['П СТЕГНО', 'M'], ['П КОЛІНО', 'M'], ['П ГОМІЛКА', 'M'], ['П СТОПА', 'M']
+    ];
+
+    const state = {
+      tab: 'S1',
+      injured: {},
+      sync: { pending: 3, acked: 11, dead: 1 }
+    };
+    const initialSync = { pending: 3, acked: 11, dead: 1 };
+    const defaults = {
+      callsign: 'АЗОВ-01',
+      triage: 'IMMEDIATE',
+      notes: '',
+      m_bleed: 'No',
+      a_airway: 'Patent',
+      r_resp: 'Stable',
+      c_circ: 'Stable',
+      v_hr: '',
+      v_spo2: '',
+      actions: '',
+      evac: 'URGENT',
+      mist: ''
+    };
+
+    function load() {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        Object.assign(state, data);
+        if (!tabs.some((tab) => tab.id === state.tab)) {
+          state.tab = 'S1';
+        }
+        if (!state.injured || typeof state.injured !== 'object') {
+          state.injured = {};
+        }
+        if (!state.sync || typeof state.sync !== 'object') {
+          state.sync = { ...initialSync };
+        }
+        ['callsign','triage','notes','m_bleed','a_airway','r_resp','c_circ','v_hr','v_spo2','actions','evac','mist']
+          .forEach((id) => {
+            const el = document.getElementById(id);
+            if (el && data[id] != null) el.value = data[id];
+          });
+      } catch {}
+    }
+
+    function updateStatus(text) {
+      const status = document.getElementById('status');
+      status.textContent = text;
+    }
+
+    function setFieldValue(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    }
+
+    function resetS1() {
+      setFieldValue('callsign', defaults.callsign);
+      setFieldValue('triage', defaults.triage);
+      setFieldValue('notes', defaults.notes);
+      updateStatus('S1 очищено локально.');
+      persist();
+      render();
+    }
+
+    function resetS2() {
+      state.injured = {};
+      updateStatus('Карту тіла очищено локально.');
+      persist();
+      renderBodyMap();
+      renderStats();
+    }
+
+    function resetS3() {
+      setFieldValue('m_bleed', defaults.m_bleed);
+      setFieldValue('a_airway', defaults.a_airway);
+      setFieldValue('r_resp', defaults.r_resp);
+      setFieldValue('c_circ', defaults.c_circ);
+      updateStatus('S3 MARCH скинуто локально.');
+      persist();
+      render();
+    }
+
+    function resetS4() {
+      setFieldValue('v_hr', defaults.v_hr);
+      setFieldValue('v_spo2', defaults.v_spo2);
+      setFieldValue('actions', defaults.actions);
+      updateStatus('S4 очищено локально.');
+      persist();
+      render();
+    }
+
+    function resetAllCase() {
+      Object.assign(state, { tab: 'S1', injured: {}, sync: { ...initialSync } });
+      Object.entries(defaults).forEach(([id, value]) => setFieldValue(id, value));
+      localStorage.removeItem(KEY);
+      updateStatus('Весь кейс скинуто. Порожній фронтенд-стан відновлено.');
+      render();
+    }
+
+    function persist() {
+      const data = {
+        ...state,
+        callsign: document.getElementById('callsign').value,
+        triage: document.getElementById('triage').value,
+        notes: document.getElementById('notes').value,
+        m_bleed: document.getElementById('m_bleed').value,
+        a_airway: document.getElementById('a_airway').value,
+        r_resp: document.getElementById('r_resp').value,
+        c_circ: document.getElementById('c_circ').value,
+        v_hr: document.getElementById('v_hr').value,
+        v_spo2: document.getElementById('v_spo2').value,
+        actions: document.getElementById('actions').value,
+        evac: document.getElementById('evac').value,
+        mist: document.getElementById('mist').value
+      };
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }
+
+    function renderTabs() {
+      const host = document.getElementById('tabs');
+      host.innerHTML = '';
+      tabs.forEach((t) => {
+        const b = document.createElement('button');
+        b.className = 'tab' + (state.tab === t.id ? ' active' : '');
+        b.textContent = t.name;
+        b.onclick = () => { state.tab = t.id; render(); };
+        host.appendChild(b);
+      });
+    }
+
+    function renderBodyMap() {
+      const host = document.getElementById('bodymap');
+      host.innerHTML = '';
+      zones.forEach(([name, p]) => {
+        const z = document.createElement('button');
+        z.className = 'zone' + (state.injured[name] ? ' on' : '');
+        z.innerHTML = '<small>' + p + '</small>' + name;
+        z.onclick = () => {
+          state.injured[name] = !state.injured[name];
+          persist();
+          renderBodyMap();
+        };
+        host.appendChild(z);
+      });
+    }
+
+    function renderStats() {
+      document.getElementById('sPending').textContent = String(state.sync.pending);
+      document.getElementById('sAcked').textContent = String(state.sync.acked);
+      document.getElementById('sDead').textContent = String(state.sync.dead);
+    }
+
+    function renderViews() {
+      tabs.forEach((t) => {
+        const panel = document.getElementById('view-' + t.id);
+        if (!panel) return;
+        panel.classList.toggle('hidden', state.tab !== t.id);
+      });
+    }
+
+    function render() {
+      renderTabs();
+      renderViews();
+      renderBodyMap();
+      renderStats();
+      persist();
+    }
+
+    document.querySelectorAll('[data-next]').forEach((b) => {
+      b.addEventListener('click', () => { state.tab = b.getAttribute('data-next'); render(); });
+    });
+    document.querySelectorAll('[data-prev]').forEach((b) => {
+      b.addEventListener('click', () => { state.tab = b.getAttribute('data-prev'); render(); });
+    });
+
+    document.getElementById('saveDraft').addEventListener('click', () => {
+      state.sync.pending += 1;
+      updateStatus('Чернетку збережено офлайн (симуляція). Черга sync-моделі збільшена.');
+      render();
+    });
+
+    document.getElementById('forceSync').addEventListener('click', () => {
+      const moved = Math.min(2, state.sync.pending);
+      state.sync.pending -= moved;
+      state.sync.acked += moved;
+      updateStatus('Тестова реплікація симулятора виконана: ' + moved + ' запис(и) ACK (локально).');
+      render();
+    });
+
+    document.getElementById('resetS1').addEventListener('click', resetS1);
+    document.getElementById('resetS2').addEventListener('click', resetS2);
+    document.getElementById('resetS3').addEventListener('click', resetS3);
+    document.getElementById('resetS4').addEventListener('click', resetS4);
+    document.getElementById('resetAll').addEventListener('click', resetAllCase);
+
+    document.querySelectorAll('input, select, textarea').forEach((el) => {
+      el.addEventListener('input', persist);
+      el.addEventListener('change', persist);
+    });
+
+    load();
+    render();
+  </script>
+</body>
+</html>

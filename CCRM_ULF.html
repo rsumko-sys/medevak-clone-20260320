@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCRM • УЛЬФ • LIVE</title>
+  <style>
+    :root {
+      --bg: #060b14;
+      --card: #111a29;
+      --line: #26324a;
+      --text: #e6eeff;
+      --muted: #9aaece;
+      --accent: #c9313a;
+      --accent2: #93242b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 520px at 18% -10%, #1b2a42 0%, transparent 70%),
+        radial-gradient(700px 420px at 82% -10%, #2c1922 0%, transparent 70%),
+        linear-gradient(180deg, #05070d 0%, var(--bg) 100%);
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      padding: 1rem;
+    }
+    .wrap {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17, 27, 42, 0.96), rgba(13, 21, 32, 0.96));
+      padding: 1rem;
+    }
+    .eyebrow {
+      margin: 0;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0.45rem 0 0.25rem;
+      font-size: clamp(1.3rem, 3.6vw, 2.2rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .sub {
+      margin: 0 0 1rem;
+      font-size: 0.82rem;
+      color: #b4c2dd;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 0.85rem;
+    }
+    .btn {
+      border: 1px solid #b43a44;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      padding: 0.7rem 0.8rem;
+      text-align: center;
+      cursor: pointer;
+    }
+    .btn.secondary {
+      border-color: var(--line);
+      background: #16233a;
+      font-weight: 600;
+    }
+    .routes {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    .route {
+      border: 1px solid var(--line);
+      background: #122036;
+      color: #d7e5ff;
+      text-decoration: none;
+      text-align: center;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.52rem 0.45rem;
+    }
+    .status {
+      margin: 0 0 0.8rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    iframe {
+      width: 100%;
+      height: min(70vh, 760px);
+      border: 1px solid var(--line);
+      background: #0a1220;
+    }
+    @media (max-width: 900px) {
+      .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .routes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">ВОВКИ ДА ВІНЧІ • МЕДИЧНА СЛУЖБА</p>
+    <h1>CCRM LIVE LAUNCHER</h1>
+    <p class="sub">поточний стан інтерфейсів на цьому домені</p>
+
+    <section class="toolbar">
+      <a class="btn" href="/" target="_blank" rel="noreferrer">Відкрити окремо</a>
+      <button class="btn secondary" id="reloadFrame">Оновити preview</button>
+      <button class="btn secondary" id="checkServer">Перевірити сервер</button>
+      <button class="btn secondary" id="copyLink">Копіювати URL</button>
+    </section>
+
+    <section class="routes">
+      <a class="route" href="/battlefield" target="preview">Бойовий</a>
+      <a class="route" href="/command" target="preview">Командний</a>
+      <a class="route" href="/cases" target="preview">Кейси</a>
+      <a class="route" href="/supplies" target="preview">Запаси</a>
+      <a class="route" href="/blood" target="preview">Кров</a>
+      <a class="route" href="/evac" target="preview">Евак</a>
+      <a class="route" href="/documents" target="preview">Документи</a>
+      <a class="route" href="/protocols" target="preview">Протоколи</a>
+      <a class="route" href="/exports" target="preview">Експорт</a>
+      <a class="route" href="/sync" target="preview">Синхронізація</a>
+    </section>
+
+    <p class="status" id="status">Порада: якщо preview порожній, перевірте що потрібний роут доступний на цьому домені.</p>
+    <iframe name="preview" id="preview" src="/"></iframe>
+  </main>
+
+  <script>
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
+
+    document.getElementById('reloadFrame').addEventListener('click', () => {
+      preview.src = preview.src;
+      status.textContent = 'Preview оновлено.';
+    });
+
+    document.getElementById('checkServer').addEventListener('click', async () => {
+      status.textContent = 'Перевіряю доступність головної сторінки...';
+      try {
+        await fetch('/', { cache: 'no-store' });
+        status.textContent = 'Сервер доступний. Можна відкривати екрани через кнопки вище.';
+      } catch {
+        status.textContent = 'Сервер або роут недоступний. Перевірте мережу та деплой.';
+      }
+    });
+
+    document.getElementById('copyLink').addEventListener('click', async () => {
+      const link = window.location.origin + '/';
+      try {
+        await navigator.clipboard.writeText(link);
+        status.textContent = 'URL скопійовано: ' + link;
+      } catch {
+        status.textContent = 'Скопіюйте вручну: ' + link;
+      }
+    });
+  </script>
+</body>
+</html>

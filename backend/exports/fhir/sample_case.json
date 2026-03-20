@@ -1,0 +1,28 @@
+{
+  "resourceType": "Bundle",
+  "type": "document",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "sample-1",
+        "identifier": [
+          {
+            "system": "urn:medevak:case",
+            "value": "sample-1"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "enc-1",
+        "status": "in-progress",
+        "subject": {
+          "reference": "Patient/sample-1"
+        }
+      }
+    }
+  ]
+}

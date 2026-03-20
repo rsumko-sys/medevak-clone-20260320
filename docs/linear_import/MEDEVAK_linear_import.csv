@@ -1,0 +1,18 @@
+Title,Description,Estimate,Labels,Completed,Created,Assignee,Status,Priority
+"MEDEVAK (CCRM) — Combat Casualty Record Module","Проект МЕДЕВАК — модуль обліку бойових поранень. Backend: FastAPI, SQLite, Alembic. Dashboard: Next.js 14. Контекст: https://vovkydavinci.army/ — батальйон Вовки Да Вінчі. Репозиторій: MEDEVAK_clone.",,,Project,,"2025-03-17",,Backlog,2
+"Sync is fake — stats 0,0,0 and empty queue","sync.py returns hardcoded pending:0, synced:0, failed:0; queue:[]. No offline/retry logic. No queue table, no retry logic, no status tracking.",3,Bug,,"2025-03-17",,Backlog,1
+"Auth is mock — any client can access","deps.py:10-12 returns mock user. No production auth. Not production-safe.",2,Bug,,"2025-03-17",,Backlog,1
+"PDF export returns JSON, not PDF","exports.py:74-86 returns JSON envelope with map_case_to_pdf_data, NOT PDF file. pdf_exporter.export_case_to_pdf returns b'' and is NOT used by API.",2,Bug,,"2025-03-17",,Backlog,2
+"Dashboard has no document upload UI","documents/page.tsx — list only, no upload. API exists (POST /documents/upload) but unusable from UI.",1,Feature,,"2025-03-17",,Backlog,2
+"documentsApi has no upload method","api.ts has list only. No upload() for dashboard. Cannot upload even if UI added.",1,Feature,,"2025-03-17",,Backlog,2
+"March, Evacuation, Tourniquets return empty","march.py:22, evacuation.py:21, tourniquets.py:21 return []. No data model or logic.",5,Feature,,"2025-03-17",,Backlog,3
+"pdf_exporter returns b'' — dead code","API uses map_case_to_pdf_data. pdf_exporter returns empty bytes — dead code path.",1,Bug,,"2025-03-17",,Backlog,3
+"Procedures comment says stub but implemented","procedures.py:1 comment wrong. Actually uses ProcedureRepository, returns real DB data.",0,Chore,,"2025-03-17",,Backlog,3
+"handoff.py bare pass in except blocks","handoff.py:49,60,73,86 — bare pass in except blocks (swallows errors).",1,Bug,,"2025-03-17",,Backlog,3
+"Android app absent","android-app folder not restored. Documented as not in clone.",,,Info,,"2025-03-17",,Backlog,4
+"Поля пацієнта: patient_name, call_sign, unit, time_of_injury","Backlog: додати поля пацієнта до моделі Case.",2,Feature,,"2025-03-17",,Backlog,3
+"Модель Tourniquet, час накладення","Backlog: модель для турнікетів з часом накладення.",2,Feature,,"2025-03-17",,Backlog,3
+"Body map UI (схема тіла)","Backlog: UI для позначення поранень на схемі тіла.",5,Feature,,"2025-03-17",,Backlog,3
+"Голосовий ввід (Whisper API)","Backlog: інтеграція Whisper для голосового введення.",3,Feature,,"2025-03-17",,Backlog,4
+"Inventory (склад медикаментів/крові)","Backlog: модуль складу медикаментів та крові.",5,Feature,,"2025-03-17",,Backlog,4
+"Окремий польовий екран (/field або /intake)","Backlog: екран для польового введення даних.",3,Feature,,"2025-03-17",,Backlog,3

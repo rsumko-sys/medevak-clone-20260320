@@ -1,0 +1,42 @@
+{
+  "system_status": "partial-mvp",
+  "critical_issues": [],
+  "high_issues": [
+    {
+      "file": "backend/app/api/v1/cases.py",
+      "function": "create_medication",
+      "problem": "except (ValueError, TypeError): pass at line 292-293. Invalid time_administered silently ignored, dt stays None."
+    },
+    {
+      "file": "backend/app/api/v1/handoff.py",
+      "function": "_aggregate_mist",
+      "problem": "except Exception at 61,74,87 log warning but return partial MIST. Silent partial failure on injuries/signs/medications/procedures."
+    }
+  ],
+  "fake_features": [
+    {
+      "file": "backend/app/mappers/case_to_pdf.py",
+      "function": "map_case_to_pdf_data",
+      "problem": "Never imported. Dead code."
+    }
+  ],
+  "working_features": [
+    "Auth: 401 without token when DEV_AUTH_BYPASS=false",
+    "Auth: 401 with fake token",
+    "Triage validation: INVALID → 422",
+    "Cascade delete: no orphan medications",
+    "PDF export: binary %PDF-1.4, content-type application/pdf",
+    "Documents: 11MB → 413",
+    "Documents: filename sanitized (../../../etc/pwned → pwned)",
+    "Sync: real stats and queue from DB",
+    "IDOR: 404 for non-existent case",
+    "SQL injection: offset validation blocks"
+  ],
+  "security_risks": [
+    "DEV_AUTH_BYPASS=true required for local dev — endpoints open when set",
+    "CORS allow_origins=['*']",
+    "SECRET_KEY default in config"
+  ],
+  "data_integrity": "safe",
+  "verdict": "Partial MVP. Auth enforced by default. Triage validated. Documents sanitized and size-limited. Sync is real. Dead code: map_case_to_pdf_data unused."
+}
