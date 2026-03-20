@@ -1,4 +1,16 @@
-import { ApiEnvelope, AuditEntry, CaseDetails, CaseItem, TriageCategory } from './types'
+import {
+  ApiEnvelope,
+  AuditEntry,
+  CaseDetails,
+  CaseItem,
+  FieldCommit,
+  FieldDispatchLog,
+  FieldNeed,
+  FieldPosition,
+  FieldRecommendation,
+  FieldRequest,
+  TriageCategory,
+} from './types'
 
 const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_BASE) return process.env.NEXT_PUBLIC_API_BASE
@@ -187,4 +199,63 @@ export function exportFhirUrl(caseId: string) {
 
 export function exportQrUrl(caseId: string) {
   return `${API_BASE}/exports/${caseId}/qr`
+}
+
+export async function listFieldDropPositions() {
+  return apiGet<FieldPosition[]>('/field-drop/positions')
+}
+
+export async function createFieldDropPosition(payload: {
+  name: string
+  x: number
+  y: number
+  inventory: {
+    hemostatic: number
+    bandage: number
+    tourniquet: number
+    meds?: Record<string, number>
+  }
+}) {
+  return apiPost<FieldPosition>('/field-drop/positions', {
+    ...payload,
+    inventory: {
+      hemostatic: payload.inventory.hemostatic,
+      bandage: payload.inventory.bandage,
+      tourniquet: payload.inventory.tourniquet,
+      meds: payload.inventory.meds ?? {},
+    },
+  })
+}
+
+export async function updateFieldDropInventory(positionId: string, item_name: string, qty: number) {
+  return apiPatch<{ position_id: string; item_name: string; qty: number }>(
+    `/field-drop/positions/${positionId}/inventory`,
+    { item_name, qty }
+  )
+}
+
+export async function listFieldDropRequests() {
+  return apiGet<FieldRequest[]>('/field-drop/requests')
+}
+
+export async function createFieldDropRequest(payload: {
+  x: number
+  y: number
+  urgency: string
+  radius_km: number
+  required: FieldNeed[]
+}) {
+  return apiPost<FieldRequest>('/field-drop/requests', payload)
+}
+
+export async function getFieldDropRecommendation(requestId: string) {
+  return apiGet<FieldRecommendation>(`/field-drop/requests/${requestId}/recommendation`)
+}
+
+export async function commitFieldDropRequest(requestId: string) {
+  return apiPost<FieldCommit>(`/field-drop/requests/${requestId}/commit`, {})
+}
+
+export async function listFieldDropLogs(limit = 20) {
+  return apiGet<FieldDispatchLog[]>(`/field-drop/logs?limit=${limit}`)
 }

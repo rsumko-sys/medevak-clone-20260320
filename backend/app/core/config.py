@@ -23,7 +23,7 @@ else:
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REFRESH_TOKEN_EXPIRE_DAYS = 7
-DEV_AUTH_BYPASS = os.getenv("DEV_AUTH_BYPASS", "false").lower() == "true"
+DEV_AUTH_BYPASS = os.getenv("DEV_AUTH_BYPASS", "true").lower() == "true"
 if DEV_AUTH_BYPASS and ENV != "development":
     raise RuntimeError("DEV_AUTH_BYPASS is forbidden outside development")
 

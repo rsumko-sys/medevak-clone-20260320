@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Zap, Monitor, Mic, Map, Grid, Shield, Users, Box, Droplet, RefreshCw } from 'lucide-react'
+import { Zap, Monitor, Mic, Map, Grid, Shield, Users, Box, Droplet, RefreshCw, Radio } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -25,7 +25,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-6xl w-full">
         
         {/* Field Dashboard Card */}
         <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
@@ -95,6 +95,45 @@ export default function HomePage() {
 
             <Link href="/command" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#22252b] hover:bg-[#2a2e35] border border-[#333740] text-gray-300 font-bold tracking-widest text-sm transition-colors w-48">
               ВІДКРИТИ →
+            </Link>
+          </div>
+        </div>
+
+        {/* New Contour Card */}
+        <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-amber-800/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-amber-500/30" />
+
+          <div className="p-8 flex-1">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="bg-amber-900/30 p-3 rounded-sm text-amber-400 border border-amber-700/40">
+                <Radio className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-[10px] text-amber-400 uppercase tracking-widest font-bold mb-1">ПОЛЬОВИЙ СКИД</div>
+                <h2 className="text-2xl font-bold tracking-widest text-white leading-tight [font-family:var(--app-font-display)]">ПОЛЬОВИЙ<br/>СКИД</h2>
+              </div>
+            </div>
+
+            <ul className="space-y-4 mb-10">
+              <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
+                <Box className="w-4 h-4 text-gray-500" /> ЛОГІСТИКА В ЄДИНІЙ СИСТЕМІ CCRM
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
+                <Radio className="w-4 h-4 text-gray-500" /> РЕКОМЕНДАЦІЇ СКИДУ В РЕАЛЬНОМУ ЧАСІ
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
+                <RefreshCw className="w-4 h-4 text-gray-500" /> АВТОМАТИЧНИЙ ЛОГ ДИСПЕТЧЕРСЬКИХ ДІЙ
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
+                <Shield className="w-4 h-4 text-gray-500" /> КОНТРОЛЬ ПОЗИЦІЙ, ЗАПИТІВ І ПІДТВЕРДЖЕНЬ
+              </li>
+            </ul>
+
+            <Link
+              href="/field-drop"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber-900/20 hover:bg-amber-900/35 border border-amber-700/40 text-amber-200 font-bold tracking-widest text-sm transition-colors w-56"
+            >
+              ВІДКРИТИ СКИД →
             </Link>
           </div>
         </div>

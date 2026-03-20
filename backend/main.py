@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 
 # Ensure the backend and its parent are in the path for robust imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,11 +28,15 @@ startup_error: Optional[str] = None
 try:
     from app.api.router import api_router as imported_api_router
     from app.core.config import PRIVATE_NETWORK_ONLY as imported_private_network_only
+    from app.core.config import CORS_ORIGINS as imported_cors_origins
+    from app.core.database import AsyncSessionLocal
 
     api_router = imported_api_router
     PRIVATE_NETWORK_ONLY = imported_private_network_only
+    cors_origins = imported_cors_origins
 except Exception as exc:  # noqa: BLE001
     startup_error = f"Startup import failure: {exc.__class__.__name__}: {exc}"
+    cors_origins = ["http://localhost:3000", "http://localhost:5173"]
 
 
 def _is_private_client_ip(value: str) -> bool:
@@ -64,15 +69,9 @@ async def enforce_private_network_only(request: Request, call_next):
         },
     )
 
-# Add CORS middleware to allow frontend (port 3000) to communicate with backend (port 8000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000", 
-        "http://0.0.0.0:3000",
-        "*.railway.app"
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -95,6 +94,32 @@ async def health_check():
         "timestamp": str(datetime.now()),
         "startup_error": startup_error,
     }
+
+
+@app.get("/ready")
+async def readiness_check():
+    if startup_error is not None:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ready": False,
+                "startup_error": startup_error,
+            },
+        )
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+            await session.execute(text("SELECT 1 FROM field_positions LIMIT 1"))
+        return {"ready": True}
+    except Exception as exc:  # noqa: BLE001
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ready": False,
+                "error": f"DB check failed: {exc.__class__.__name__}",
+            },
+        )
 
 # Robust static directory resolution
 current_dir = os.path.dirname(os.path.abspath(__file__))

@@ -140,3 +140,73 @@ export interface AuditEntry {
   user_id?: string | null
   created_at?: string | null
 }
+
+export interface FieldInventorySnapshot {
+  hemostatic: number
+  bandage: number
+  tourniquet: number
+  meds: Record<string, number>
+}
+
+export interface FieldPosition {
+  id: string
+  name: string
+  x: number
+  y: number
+  updated_at: string
+  inventory: FieldInventorySnapshot
+}
+
+export interface FieldNeed {
+  item_name: string
+  qty: number
+}
+
+export interface FieldRequest {
+  id: string
+  x: number
+  y: number
+  urgency: string
+  radius_km: number
+  status: string
+  created_at: string
+  required: FieldNeed[]
+}
+
+export interface FieldRecommendationRow {
+  position_id?: string | null
+  position?: string | null
+  item_name: string
+  qty: number
+  distance_km?: number | null
+  score?: number | null
+  eta_min?: number | null
+  status: string
+}
+
+export interface FieldRecommendation {
+  request_id: string
+  urgency: string
+  eta_min?: number | null
+  eta_max?: number | null
+  actions: FieldRecommendationRow[]
+}
+
+export interface FieldCommit {
+  ok: boolean
+  applied: FieldRecommendationRow[]
+  messages: string[]
+}
+
+export interface FieldDispatchLog {
+  id: string
+  request_id: string
+  position_id?: string | null
+  position_name?: string | null
+  item_name: string
+  qty: number
+  distance_km?: number | null
+  eta_min?: number | null
+  status: string
+  created_at?: string | null
+}

@@ -24,10 +24,13 @@ if ! python3 -c "import ssl" >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "🚀 Starting backend (local-only mode)..."
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-8000}"
+
+echo "🚀 Starting backend on ${HOST}:${PORT}..."
 # Keep local default but allow overriding from environment.
 export DEV_AUTH_BYPASS="${DEV_AUTH_BYPASS:-true}"
 # Using the module path 'backend.main:app' allows uvicorn to resolve imports relative to root.
 exec uvicorn backend.main:app \
-  --host 127.0.0.1 \
-  --port 8000
+    --host "${HOST}" \
+    --port "${PORT}"

@@ -23,6 +23,7 @@ from app.api.v1 import (
     personnel,
     storage,
     settings,
+    field_drop,
 )
 
 api_router = APIRouter()
@@ -48,3 +49,4 @@ api_router.include_router(fhir.router)
 api_router.include_router(personnel.router)
 api_router.include_router(storage.router)
 api_router.include_router(settings.router)
+api_router.include_router(field_drop.router)
