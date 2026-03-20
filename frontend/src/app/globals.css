@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --app-font-family: "Eurostile", "Eurostile LT Std", "Microgramma", "Bank Gothic", "Segoe UI", sans-serif;
+  --app-font-display: "Eurostile", "Eurostile LT Std", "Microgramma", "Bank Gothic", "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  font-family: var(--app-font-family) !important;
+  font-style: normal !important;
+}
+
+.pb-safe-area {
+  padding-bottom: 12rem;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@layer base {
+  html, body {
+    @apply min-h-screen;
+  }
+  body {
+    @apply bg-background text-gray-200 font-sans antialiased flex flex-col;
+  }
+}
+
+@layer components {
+  .wolf-shell {
+    @apply min-h-screen bg-background text-gray-200 flex flex-col;
+  }
+
+  .wolf-panel {
+    @apply bg-panel border rounded-xl border-borderContent shadow-md;
+  }
+
+  .wolf-title {
+    @apply text-xs uppercase tracking-widest text-gray-400 font-semibold;
+    font-family: var(--app-font-display);
+  }
+
+  .wolf-h1 {
+    @apply text-xl md:text-2xl uppercase tracking-widest font-bold;
+    font-family: var(--app-font-display);
+  }
+
+  .wolf-input {
+    @apply bg-[#0f1217] border border-borderContent text-gray-200 px-3 py-2 text-sm outline-none focus:border-red-500 rounded-md transition-colors;
+  }
+
+  .wolf-btn {
+    @apply px-4 py-2 text-sm uppercase tracking-widest border border-borderContent bg-[#1c2026] text-gray-200 hover:bg-[#252a33] transition-colors rounded-sm text-center inline-flex items-center justify-center gap-2 font-medium;
+  }
+
+  .wolf-btn-danger {
+    @apply px-4 py-2 text-sm uppercase tracking-widest border border-red-900 bg-military-darkRed text-red-500 hover:bg-red-950 transition-colors rounded-sm text-center font-medium;
+  }
+
+  .wolf-btn-green {
+    @apply px-4 py-2 text-sm uppercase tracking-widest border border-green-900 bg-[#142914] text-green-500 hover:bg-[#1a361a] transition-colors rounded-sm text-center font-medium;
+  }
+  
+  .wolf-btn-primary {
+    @apply px-4 py-2 text-sm uppercase tracking-widest border-none bg-red-600 text-white hover:bg-red-700 transition-colors rounded-sm text-center font-bold;
+  }
+}

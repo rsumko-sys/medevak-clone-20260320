@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start MEDEVAK Backend",
+            "type": "shell",
+            "command": "./run.sh",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Initialize Database",
+            "type": "shell",
+            "command": "export PYTHONPATH=. && ./.venv/bin/python backend/init_db.py",
+            "problemMatcher": []
+        }
+    ]
+}

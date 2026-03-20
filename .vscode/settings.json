@@ -1,0 +1,15 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/"
+    ],
+    "python.analysis.include": [
+        "backend"
+    ],
+    "css.lint.unknownAtRules": "ignore"
+}

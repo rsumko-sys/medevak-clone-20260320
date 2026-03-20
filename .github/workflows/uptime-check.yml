@@ -1,0 +1,30 @@
+name: Uptime Check
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production URL
+        run: |
+          set -euo pipefail
+          URL="https://medevak-clone-front-20260320.vercel.app/"
+
+          STATUS=$(curl -L -sS -o page.html -w "%{http_code}" "$URL")
+          echo "HTTP status: $STATUS"
+
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+            echo "Site returned non-success status code"
+            exit 1
+          fi
+
+          if ! grep -q "МЕДИЧНА СЛУЖБА" page.html; then
+            echo "Expected marker text not found in response body"
+            exit 1
+          fi
+
+          echo "Uptime check passed"

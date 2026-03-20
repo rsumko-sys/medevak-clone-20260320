@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDEVAK OS v1.0 • ВОВКИ ДА ВІНЧІ</title>
+    <style>
+        :root {
+            --bg-dark: #07080a;
+            --bg-card: #0f1116;
+            --border: #1f2229;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+            --text-main: #ffffff;
+            --text-dim: #6b7280;
+            --font-display: 'Impact', 'Arial Black', sans-serif;
+            --font-main: 'Inter', system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Overlay Grain */
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0.04; z-index: 10000;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Helper Classes */
+        .hidden { display: none !important; }
+        .page { height: 100%; width: 100%; display: flex; flex-direction: column; }
+
+        /* LANDING PAGE */
+        #landing-page {
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1a1e26 0%, #07080a 100%);
+            text-align: center;
+        }
+
+        .landing-logo {
+            margin-bottom: 60px;
+        }
+
+        .landing-logo h2 {
+            font-size: 10px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .landing-logo h1 {
+            font-family: var(--font-display);
+            font-size: 64px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .landing-cards {
+            display: flex;
+            gap: 24px;
+            max-width: 1000px;
+        }
+
+        .landing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            width: 450px;
+            text-align: left;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-card:hover {
+            border-color: var(--accent-red);
+            transform: scale(1.02);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .card-tag {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 32px;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 24px;
+        }
+
+        .card-features {
+            list-style: none;
+            color: var(--text-dim);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 2.2;
+        }
+
+        .card-btn {
+            margin-top: 40px;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 12px 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .card-btn:hover { background: var(--border); }
+
+        /* APP FRAME (Sidebar + Main) */
+        .app-frame {
+            display: flex;
+            height: 100vh;
+        }
+
+        aside {
+            width: 240px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .side-logo {
+            font-family: var(--font-display);
+            font-size: 20px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--accent-red);
+            padding-bottom: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active { border-left: 2px solid var(--accent-red); }
+
+        .main-stage {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* BATTLEFIELD VIEW */
+        #battlefield-view { flex-grow: 1; display: flex; flex-direction: column; }
+        
+        .battle-grid {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .zone-card {
+            background: rgba(255,255,255,0.02);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 100px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .zone-card:hover { border-color: #3f4450; }
+        .zone-card.injury { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
+
+        .zone-label { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+        .injury-badge { background: var(--accent-red); color: white; padding: 2px 6px; font-size: 9px; font-weight: 900; border-radius: 2px; }
+
+        /* COMMAND CENTER VIEW (Patients Table) */
+        .table-container { padding: 24px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+        td { padding: 16px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+        tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
+
+        /* EXPORTS VIEW */
+        .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 24px; }
+        .export-card { background: var(--bg-card); border: 1px solid var(--border); padding: 32px; border-radius: 8px; text-align: center; }
+        .export-card:hover { border-color: var(--accent-red); }
+
+        /* FOOTER */
+        .app-footer {
+            height: 90px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-dark);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .system-status { font-size: 10px; color: var(--accent-green); font-weight: 800; letter-spacing: 1px; }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            background: #111317;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab {
+            padding: 12px 20px;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-dim);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: white;
+            border-bottom-color: var(--accent-red);
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Toggle */
+        .view-toggle {
+            display: flex;
+            background: #111317;
+            margin: 16px auto;
+            border: 1px solid var(--border);
+            width: fit-content;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .toggle-btn {
+            padding: 8px 24px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* MODAL */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5000; display: none; justify-content: center; align-items: center; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border); width: 400px; padding: 32px; border-radius: 12px; }
+    </style>
+</head>
+<body>
+
+    <!-- LANDING PAGE -->
+    <div id="landing-page" class="page">
+        <div class="landing-logo">
+            <h2>ВОВКИ ДА ВІНЧІ</h2>
+            <h1>МЕДИЧНА СЛУЖБА</h1>
+        </div>
+        <div class="landing-cards">
+            <div class="landing-card" onclick="switchView('app-shell', 'battlefield')">
+                <span class="card-tag">ПОЛЬОВИЙ РЕЖИМ</span>
+                <h3 class="card-title">БОЙОВИЙ<br>ДАШБОРД</h3>
+                <ul class="card-features">
+                    <li>• ГОЛОСОВЕ ВВЕДЕННЯ (WHISPER AI)</li>
+                    <li>• СХЕМА ПОРАНЕНЬ — КАРТА ТІЛА</li>
+                    <li>• ВЕЛИКІ КНОПКИ — РОБОТА В РУКАВИЦЯХ</li>
+                </ul>
+                <button class="card-btn">ВІДКРИТИ →</button>
+            </div>
+            <div class="landing-card" onclick="switchView('app-shell', 'dashboard')">
+                <span class="card-tag">ШТАБНИЙ РЕЖИМ</span>
+                <h3 class="card-title">КОМАНДНИЙ<br>ЦЕНТР</h3>
+                <ul class="card-features">
+                    <li>• АРХІВ ТА АКТИВНІ ПАЦІЄНТИ</li>
+                    <li>• ОБЛІК МЕДИЧНИХ ЗАПАСІВ</li>
+                    <li>• СИНХРОНІЗАЦІЯ ТА АУДИТ</li>
+                </ul>
+                <button class="card-btn">ВІДКРИТИ →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SHELL -->
+    <div id="app-shell" class="page hidden">
+        <div class="app-frame">
+            <aside>
+                <div class="side-logo">MEDEVAK OS</div>
+                <div class="nav-item" data-id="battlefield" onclick="goto('battlefield')">Бойовий режим</div>
+                <div class="nav-item" data-id="dashboard" onclick="goto('dashboard')">Пацієнти</div>
+                <div class="nav-item" data-id="exports" onclick="goto('exports')">Експорт даних</div>
+                <div class="nav-item" data-id="audit" onclick="goto('audit')">Аудит-лог</div>
+                <div class="nav-item" data-id="settings" onclick="goto('settings')">Налаштування</div>
+                <div class="nav-item" style="margin-top: auto;" onclick="switchView('landing-page')">Вийти</div>
+            </aside>
+
+            <div class="main-stage">
+                <header>
+                    <div class="header-title" id="page-title">Бойовий режим</div>
+                    <div style="font-size: 11px; color: var(--text-dim);">UNIT: WOLF-01 • DEVICE: T-800</div>
+                </header>
+
+                <div id="view-battlefield" class="subview">
+                    <div class="tab-bar">
+                        <div class="tab" onclick="setTab('inteke')">1. ІНТЕЙК</div>
+                        <div class="tab active" onclick="setTab('bodymap')">2. BODY MAP</div>
+                        <div class="tab" onclick="setTab('march')">3. M.A.R.C.H</div>
+                        <div class="tab" onclick="setTab('vitals')">4. ДІЇ / ВІТАЛЬНІ</div>
+                        <div class="tab" onclick="setTab('evak')">5. EVAK</div>
+                    </div>
+
+                    <div id="tab-bodymap" class="tab-content">
+                        <div class="view-toggle">
+                            <div class="toggle-btn active" onclick="setView('front')">ФРОНТ</div>
+                            <div class="toggle-btn" onclick="setView('back')">ТИЛ</div>
+                        </div>
+
+                        <div class="battle-grid">
+                            <div class="col-2" id="HEAD"></div>
+                            <div class="flex-col-gap col-1">
+                                <div id="L_SHOULDER"></div>
+                                <div id="L_FOREARM"></div>
+                            </div>
+                            <div class="flex-col-gap col-2">
+                                <div id="CHEST_ANTERIOR"></div>
+                                <div id="ABDOMEN"></div>
+                                <div id="PELVIS"></div>
+                            </div>
+                            <div class="flex-col-gap col-3">
+                                <div id="R_SHOULDER"></div>
+                                <div id="R_FOREARM"></div>
+                            </div>
+                            <div class="col-1" id="L_THIGH"></div>
+                            <div class="col-2 invisible"></div>
+                            <div class="col-3" id="R_THIGH"></div>
+                            <div class="col-1" id="L_LOWER_LEG"></div>
+                            <div class="col-3" id="R_LOWER_LEG"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-inteke" class="tab-content hidden" style="padding: 40px; text-align: center; color: var(--text-dim);">
+                        [ ІНТЕЙК: ВІДСУТНІ ДАНІ ]
+                    </div>
+                    <div id="tab-march" class="tab-content hidden" style="padding: 40px; text-align: center; color: var(--text-dim);">
+                        [ M.A.R.C.H: ВІДСУТНІ ДАНІ ]
+                    </div>
+                </div>
+
+                <div id="view-dashboard" class="subview hidden">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>ПОЗИВНИЙ</th><th>СТАТУС</th><th>ЧАС ПРИБУТТЯ</th><th>ДІЇ</th></tr></thead>
+                            <tbody id="patient-table">
+                                <tr><td>FINAL-SUCCESS</td><td><span style="color:var(--accent-red)">КРИТИЧНИЙ</span></td><td>15:07</td><td>[ ПЕРЕГЛЯД ]</td></tr>
+                                <tr><td>VETERAN-01</td><td><span style="color:var(--accent-green)">СТАБІЛЬНИЙ</span></td><td>12:45</td><td>[ ПЕРЕГЛЯД ]</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-exports" class="subview hidden">
+                    <div class="export-grid">
+                        <div class="export-card"><h3>PDF REPORT</h3><p style="font-size:10px;color:var(--text-dim)">СТАНДАРТ NATO</p></div>
+                        <div class="export-card"><h3>FHIR BUNDLE</h3><p style="font-size:10px;color:var(--text-dim)">JSON DATA</p></div>
+                        <div class="export-card"><h3>QR PAYLOAD</h3><p style="font-size:10px;color:var(--text-dim)">OFFLINE SYNC</p></div>
+                    </div>
+                </div>
+
+                <footer class="app-footer">
+                    <div class="system-status">● СИСТЕМА АКТИВНА • КАНАЛ СИНХРОНІЗАЦІЇ ЗАШИФРОВАНО</div>
+                    <button style="padding: 12px 24px; background: var(--accent-red); color: white; border: none; font-weight: 900; border-radius: 4px; cursor: pointer;">ЗБЕРЕГТИ КЕЙС</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- INJURY MODAL -->
+    <div class="overlay" id="inj-modal">
+        <div class="modal">
+            <h2 id="modal-zone" style="margin-bottom:20px; text-transform:uppercase;">Голова</h2>
+            <div style="margin-bottom:15px">
+                <label style="font-size:10px; color:var(--text-dim);">ТИП ТРАВМИ</label>
+                <select id="modal-type" style="width:100%; padding:10px; background:#000; color:#fff; border:1px solid var(--border);">
+                    <option value="GSW">КУЛЬОВЕ (GSW)</option>
+                    <option value="SHRAPNEL">УЛАМКОВЕ (SHRAPNEL)</option>
+                    <option value="BLAST">КОНТУЗІЯ (BLAST)</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeModal()" style="flex:1; padding:10px; background:none; border:1px solid var(--border); color:#fff;">СКАСУВАТИ</button>
+                <button onclick="saveInj()" style="flex:1; padding:10px; background:var(--accent-red); border:none; color:#fff; font-weight:bold;">ЗБЕРЕГТИ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ZONES = [
+            { id: 'HEAD', name: 'Голова / Шия', col: 2, row: 1 },
+            { id: 'L_SHOULDER', name: 'Л. Плече', col: 1, row: 2 },
+            { id: 'CHEST', name: 'Грудна клітка', col: 2, row: 2 },
+            { id: 'R_SHOULDER', name: 'П. Плече', col: 3, row: 2 },
+            { id: 'L_ARM', name: 'Л. Рука', col: 1, row: 3 },
+            { id: 'ABDOMEN', name: 'Живіт', col: 2, row: 3 },
+            { id: 'R_ARM', name: 'П. Рука', col: 3, row: 3 },
+            { id: 'PELVIS', name: 'Таз', col: 2, row: 4 },
+            { id: 'L_THIGH', name: 'Л. Стегно', col: 1, row: 5 },
+            { id: 'R_THIGH', name: 'П. Стегно', col: 3, row: 5 },
+            { id: 'L_LEG', name: 'Л. Гомілка', col: 1, row: 6 },
+            { id: 'R_LEG', name: 'П. Гомілка', col: 3, row: 6 }
+        ];
+
+        let state = {
+            currentPage: 'landing',
+            currentTab: 'bodymap',
+            currentView: 'front',
+            selectedZone: null,
+            injuries: {}, // { zoneId: [type1, type2] }
+            patients: [
+                { id: 1, callsign: 'FINAL-SUCCESS', status: 'КРИТИЧНИЙ', time: '15:07', color: 'var(--accent-red)' },
+                { id: 2, callsign: 'VETERAN-01', status: 'СТАБІЛЬНИЙ', time: '12:45', color: 'var(--accent-green)' },
+                { id: 3, callsign: 'WOLF-PACK', status: 'СЕРЕДНІЙ', time: '16:20', color: 'var(--accent-yellow)' }
+            ],
+            audit: [
+                { time: '15:07:09', action: 'CREATE', table: 'cases', details: 'Callsign: FINAL-SUCCESS' },
+                { time: '15:05:22', action: 'UPDATE', table: 'settings', details: 'Unit ID: WOLF-01' },
+                { time: '14:50:00', action: 'LOGIN', table: 'users', details: 'User: Medic_1' }
+            ]
+        };
+
+        function switchView(pageId, initialView) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            if (initialView) goto(initialView);
+        }
+
+        function goto(id) {
+            document.querySelectorAll('.subview').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + id).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-item[data-id="${id}"]`);
+            if (activeNav) activeNav.classList.add('active');
+
+            const titles = { battlefield: 'Бойовий режим', dashboard: 'Пацієнти', exports: 'Експорт даних', audit: 'Аудит-лог', settings: 'Налаштування' };
+            document.getElementById('page-title').innerText = titles[id] || 'MEDEVAK';
+            
+            if (id === 'dashboard') renderPatients();
+            if (id === 'audit') renderAudit();
+            if (id === 'battlefield') renderBodyMap();
+        }
+
+        function setTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            state.currentTab = tabId;
+        }
+
+        function setView(view) {
+            state.currentView = view;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            renderBodyMap();
+        }
+
+        function renderBodyMap() {
+            ZONES.forEach(zone => {
+                const el = document.getElementById(zone.id);
+                if (!el) return;
+                const zoneInjuries = state.injuries[zone.id] || [];
+                el.innerHTML = `
+                    <div class="zone-card ${zoneInjuries.length > 0 ? 'injury' : ''}" onclick="openInjModal('${zone.id}')">
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span class="zone-label">${zone.name}</span>
+                            <span style="color:var(--text-dim);font-weight:bold;">+</span>
+                        </div>
+                        <div class="injury-markers" style="display:flex; gap:4px; margin-top:8px;">
+                            ${zoneInjuries.map(t => `<span class="injury-badge">${t}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openInjModal(zoneId) {
+            state.selectedZone = zoneId;
+            document.getElementById('modal-zone').innerText = ZONES.find(z => z.id === zoneId).name;
+            document.getElementById('inj-modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('inj-modal').style.display = 'none'; }
+
+        function saveInj() {
+            const type = document.getElementById('modal-type').value;
+            if (!state.injuries[state.selectedZone]) state.injuries[state.selectedZone] = [];
+            state.injuries[state.selectedZone].push(type);
+            closeModal();
+            renderBodyMap();
+        }
+
+        function renderPatients() {
+            const tbody = document.getElementById('patient-table');
+            tbody.innerHTML = state.patients.map(p => `
+                <tr>
+                    <td>${p.callsign}</td>
+                    <td><span style="color:${p.color}">${p.status}</span></td>
+                    <td>${p.time}</td>
+                    <td style="color:var(--accent-red); font-weight:800; cursor:pointer;" onclick="goto('battlefield')">ВІДКРИТИ →</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAudit() {
+            const tbody = document.getElementById('audit-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = state.audit.map(a => `
+                <tr>
+                    <td>${a.time}</td>
+                    <td style="font-weight:bold;">${a.action}</td>
+                    <td>${a.table}</td>
+                    <td style="color:var(--text-dim);">${a.details}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Initialize view
+        renderBodyMap();
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "venvPath": "/Users/admin/Desktop/MEDEVAK_clone",
+  "venv": ".venv",
+  "include": [
+    "backend"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "frontend"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": [
+        "."
+      ]
+    }
+  ],
+  "reportMissingImports": true,
+  "typeCheckingMode": "basic"
+}
