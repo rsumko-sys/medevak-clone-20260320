@@ -253,7 +253,7 @@ async def get_case(
 
     # Fetch sub-records
     def get_stmt(model):
-        return select(model).where(model.case_id == case_id, model.voided == False)
+        return select(model).where(model.case_id == case_id, model.voided.is_(False))
 
     injuries = (await session.execute(get_stmt(Injury))).scalars().all()
     procedures = (await session.execute(get_stmt(Procedure))).scalars().all()

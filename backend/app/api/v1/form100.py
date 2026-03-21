@@ -106,6 +106,15 @@ def _legacy_to_canonical(form: Form100Record) -> dict:
 
 
 def _canonical_from_record(form: Form100Record) -> dict:
+    front_identity = _from_json(form.front_side_identity_json)
+    front_injury = _from_json(form.front_side_injury_json)
+    front_treatment = _from_json(form.front_side_treatment_json)
+    front_evacuation = _from_json(form.front_side_evacuation_json)
+    front_triage = _from_json(form.front_side_triage_markers_json)
+    front_body = _from_json(form.front_side_body_diagram_json)
+    back_stage_log = _from_json(form.back_side_stage_log_json)
+    back_signature = _from_json(form.back_side_signature_json)
+
     canonical = {
         "stub": _from_json(form.stub_json),
         "front_side": {},
@@ -114,25 +123,25 @@ def _canonical_from_record(form: Form100Record) -> dict:
     }
 
     front_side = {}
-    if _from_json(form.front_side_identity_json) is not None:
-        front_side["identity"] = _from_json(form.front_side_identity_json)
-    if _from_json(form.front_side_injury_json) is not None:
-        front_side["injury"] = _from_json(form.front_side_injury_json)
-    if _from_json(form.front_side_treatment_json) is not None:
-        front_side["treatment"] = _from_json(form.front_side_treatment_json)
-    if _from_json(form.front_side_evacuation_json) is not None:
-        front_side["evacuation"] = _from_json(form.front_side_evacuation_json)
-    if _from_json(form.front_side_triage_markers_json) is not None:
-        front_side["triage_markers"] = _from_json(form.front_side_triage_markers_json)
-    if _from_json(form.front_side_body_diagram_json) is not None:
-        front_side["body_diagram"] = _from_json(form.front_side_body_diagram_json)
+    if front_identity is not None:
+        front_side["identity"] = front_identity
+    if front_injury is not None:
+        front_side["injury"] = front_injury
+    if front_treatment is not None:
+        front_side["treatment"] = front_treatment
+    if front_evacuation is not None:
+        front_side["evacuation"] = front_evacuation
+    if front_triage is not None:
+        front_side["triage_markers"] = front_triage
+    if front_body is not None:
+        front_side["body_diagram"] = front_body
     canonical["front_side"] = front_side if front_side else None
 
     back_side = {}
-    if _from_json(form.back_side_stage_log_json) is not None:
-        back_side["stage_log"] = _from_json(form.back_side_stage_log_json)
-    if _from_json(form.back_side_signature_json) is not None:
-        back_side["signature"] = _from_json(form.back_side_signature_json)
+    if back_stage_log is not None:
+        back_side["stage_log"] = back_stage_log
+    if back_signature is not None:
+        back_side["signature"] = back_signature
     canonical["back_side"] = back_side if back_side else None
 
     if not canonical.get("stub") and not canonical.get("front_side") and not canonical.get("back_side") and not canonical.get("meta_legal_rules"):
@@ -299,7 +308,7 @@ async def create_form100(
     existing = (
         await session.execute(
             select(Form100Record)
-            .where(Form100Record.case_id == case_id, Form100Record.voided == False)
+            .where(Form100Record.case_id == case_id, Form100Record.voided.is_(False))
             .order_by(Form100Record.created_at.desc())
             .limit(1)
         )
@@ -342,7 +351,7 @@ async def get_form100(
     form = (
         await session.execute(
             select(Form100Record)
-            .where(Form100Record.case_id == case_id, Form100Record.voided == False)
+            .where(Form100Record.case_id == case_id, Form100Record.voided.is_(False))
             .order_by(Form100Record.created_at.desc())
             .limit(1)
         )
@@ -364,7 +373,7 @@ async def update_form100(
     form = (
         await session.execute(
             select(Form100Record)
-            .where(Form100Record.case_id == case_id, Form100Record.voided == False)
+            .where(Form100Record.case_id == case_id, Form100Record.voided.is_(False))
             .order_by(Form100Record.created_at.desc())
             .limit(1)
         )
