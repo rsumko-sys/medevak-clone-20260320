@@ -89,6 +89,11 @@ async def test_export_bundle_and_pdf_include_form100(export_form100_client):
                 injury_mechanism="GSW",
                 diagnosis_summary="Penetrating trauma",
                 documented_by="Medic-02",
+                front_side_triage_markers_json=json.dumps({"red_urgent_care": True}),
+                back_side_stage_log_json=json.dumps([
+                    {"stage_name": "ROLE_1", "result": "stable"},
+                    {"stage_name": "ROLE_2", "result": "evacuate"},
+                ]),
             )
         )
         await session.commit()
@@ -101,6 +106,8 @@ async def test_export_bundle_and_pdf_include_form100(export_form100_client):
     assert "form_100" in case_json
     assert case_json["form_100"]["document_number"] == "F100-EXP-01"
     assert case_json["form_100"]["injury_location"] == "Sector B"
+    assert case_json["form_100"]["front_side"]["triage_markers"]["red_urgent_care"] is True
+    assert len(case_json["form_100"]["back_side"]["stage_log"]) == 2
 
     pdf_resp = await client.get(f"/api/v1/exports/{case_id}/pdf")
     assert pdf_resp.status_code == 200

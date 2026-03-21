@@ -3,6 +3,7 @@ FHIR Integration Module for MEDEVAK
 Integrates fhir.resources for standardized healthcare data exchange
 """
 from datetime import datetime
+import json
 from typing import Dict, List, Optional, Any
 from uuid import uuid4
 
@@ -367,6 +368,25 @@ def export_case_to_fhir_bundle(case_data: Dict[str, Any]) -> Dict[str, Any]:
                     "valueString": " | ".join(notes_parts),
                 }
             })
+
+        form100 = case_data.get("form_100") or {}
+        canonical_sections = {
+            "Form100 Stub": form100.get("stub"),
+            "Form100 Front Side": form100.get("front_side"),
+            "Form100 Back Side": form100.get("back_side"),
+            "Form100 Meta Legal Rules": form100.get("meta_legal_rules"),
+        }
+        for title, section in canonical_sections.items():
+            if section:
+                result.setdefault("entry", []).append({
+                    "resource": {
+                        "resourceType": "Observation",
+                        "status": "final",
+                        "code": {"text": title},
+                        "subject": {"reference": f"Patient/{case_data.get('id', '')}"},
+                        "valueString": json.dumps(section, ensure_ascii=False),
+                    }
+                })
         return result
     
     return {

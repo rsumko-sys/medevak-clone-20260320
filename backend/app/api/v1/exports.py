@@ -25,6 +25,96 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+def _from_json(value: str | None):
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def _legacy_to_canonical(form: Form100Record) -> dict:
+    marks = []
+    if form.injury_location:
+        marks.append({"wound_mark_location": form.injury_location})
+    return {
+        "stub": {
+            "issued_at": form.created_at.isoformat() if form.created_at else None,
+            "isolation_flag": False,
+            "urgent_care_flag": False,
+            "sanitary_processing_flag": False,
+        },
+        "front_side": {
+            "injury": {
+                "injury_or_illness_datetime": form.injury_datetime.isoformat() if form.injury_datetime else None,
+                "diagnosis": form.diagnosis_summary,
+                "injury_mechanism": form.injury_mechanism,
+                "injury_category_codes": [form.injury_mechanism] if form.injury_mechanism else [],
+                "body_diagram_marks": marks,
+            },
+            "treatment": {
+                "treatment_notes": form.treatment_summary,
+            },
+            "evacuation": {
+                "recommendation_notes": form.evacuation_recommendation,
+            },
+        },
+        "back_side": {
+            "stage_log": [],
+            "signature": {
+                "physician_name": form.documented_by,
+                "signed_at": form.updated_at.isoformat() if form.updated_at else None,
+            },
+        },
+        "meta_legal_rules": {
+            "commander_notified": form.commander_notified,
+            "additional_notes": form.notes,
+        },
+    }
+
+
+def _canonical_from_form(form: Form100Record) -> dict:
+    front_side = {}
+    identity = _from_json(form.front_side_identity_json)
+    injury = _from_json(form.front_side_injury_json)
+    treatment = _from_json(form.front_side_treatment_json)
+    evacuation = _from_json(form.front_side_evacuation_json)
+    triage_markers = _from_json(form.front_side_triage_markers_json)
+    body_diagram = _from_json(form.front_side_body_diagram_json)
+
+    if identity is not None:
+        front_side["identity"] = identity
+    if injury is not None:
+        front_side["injury"] = injury
+    if treatment is not None:
+        front_side["treatment"] = treatment
+    if evacuation is not None:
+        front_side["evacuation"] = evacuation
+    if triage_markers is not None:
+        front_side["triage_markers"] = triage_markers
+    if body_diagram is not None:
+        front_side["body_diagram"] = body_diagram
+
+    back_side = {}
+    stage_log = _from_json(form.back_side_stage_log_json)
+    signature = _from_json(form.back_side_signature_json)
+    if stage_log is not None:
+        back_side["stage_log"] = stage_log
+    if signature is not None:
+        back_side["signature"] = signature
+
+    canonical = {
+        "stub": _from_json(form.stub_json),
+        "front_side": front_side if front_side else None,
+        "back_side": back_side if back_side else None,
+        "meta_legal_rules": _from_json(form.meta_legal_rules_json),
+    }
+    if not canonical["stub"] and not canonical["front_side"] and not canonical["back_side"] and not canonical["meta_legal_rules"]:
+        return _legacy_to_canonical(form)
+    return canonical
+
+
 async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
     """Fetch case with observations, medications, procedures as dict."""
     case = await session.get(Case, case_id)
@@ -50,6 +140,7 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
         .limit(1)
     )
     latest_form100 = (await session.execute(form_stmt)).scalars().first()
+    canonical_form100 = _canonical_from_form(latest_form100) if latest_form100 else {}
 
     def _obs(o):
         return {"id": str(o.id), "case_id": str(o.case_id), "observation_type": o.observation_type, "value": o.value}
@@ -90,6 +181,10 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
             "evacuation_recommendation": getattr(latest_form100, "evacuation_recommendation", None),
             "commander_notified": getattr(latest_form100, "commander_notified", None),
             "notes": getattr(latest_form100, "notes", None),
+            "stub": canonical_form100.get("stub"),
+            "front_side": canonical_form100.get("front_side"),
+            "back_side": canonical_form100.get("back_side"),
+            "meta_legal_rules": canonical_form100.get("meta_legal_rules"),
         },
         "observations": [_obs(o) for o in obs_list],
         "medications": [_med(m) for m in meds],

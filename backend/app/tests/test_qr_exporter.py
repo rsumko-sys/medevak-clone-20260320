@@ -39,3 +39,21 @@ def test_export_case_to_qr_includes_march_notes():
         "c": "c note",
         "h": "h note",
     }
+
+
+def test_export_case_to_qr_includes_form100_canonical_block():
+    result = export_case_to_qr({
+        "id": "case-2",
+        "form_100": {
+            "document_number": "F100-QR-01",
+            "stub": {"urgent_care_flag": True},
+            "front_side": {"triage_markers": {"red_urgent_care": True}},
+            "back_side": {"stage_log": [{"stage_name": "ROLE_1"}]},
+            "meta_legal_rules": {"continuity_required": True},
+        },
+    })
+    parsed = json.loads(result)
+    assert "f100" in parsed
+    assert parsed["f100"]["dn"] == "F100-QR-01"
+    assert parsed["f100"]["s"]["urgent_care_flag"] is True
+    assert parsed["f100"]["fs"]["triage_markers"]["red_urgent_care"] is True

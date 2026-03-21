@@ -1,4 +1,5 @@
 """Cases router."""
+import json
 import logging
 import uuid
 from datetime import datetime
@@ -30,12 +31,128 @@ from app.models.evacuation import EvacuationRecord
 from app.models.events import Event
 
 # Schemas
-from app.schemas.unified import CaseCreate, CaseUpdate, CaseResponse, CaseDetailResponse, InjuryCreate
+from app.schemas.unified import CaseCreate, CaseUpdate, CaseResponse, CaseDetailResponse, InjuryCreate, Form100Response
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/cases", tags=["cases"])
+
+
+def _from_json(value: str | None):
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def _legacy_to_canonical(form: Form100Record) -> dict:
+    marks = []
+    if form.injury_location:
+        marks.append({"wound_mark_location": form.injury_location})
+    return {
+        "stub": {
+            "issued_at": form.created_at.isoformat() if form.created_at else None,
+            "isolation_flag": False,
+            "urgent_care_flag": False,
+            "sanitary_processing_flag": False,
+        },
+        "front_side": {
+            "injury": {
+                "injury_or_illness_datetime": form.injury_datetime.isoformat() if form.injury_datetime else None,
+                "diagnosis": form.diagnosis_summary,
+                "injury_mechanism": form.injury_mechanism,
+                "injury_category_codes": [form.injury_mechanism] if form.injury_mechanism else [],
+                "body_diagram_marks": marks,
+            },
+            "treatment": {
+                "treatment_notes": form.treatment_summary,
+            },
+            "evacuation": {
+                "recommendation_notes": form.evacuation_recommendation,
+            },
+        },
+        "back_side": {
+            "stage_log": [],
+            "signature": {
+                "physician_name": form.documented_by,
+                "signed_at": form.updated_at.isoformat() if form.updated_at else None,
+            },
+        },
+        "meta_legal_rules": {
+            "commander_notified": form.commander_notified,
+            "additional_notes": form.notes,
+        },
+    }
+
+
+def _canonical_from_form(form: Form100Record) -> dict:
+    front_side = {}
+    identity = _from_json(form.front_side_identity_json)
+    injury = _from_json(form.front_side_injury_json)
+    treatment = _from_json(form.front_side_treatment_json)
+    evacuation = _from_json(form.front_side_evacuation_json)
+    triage_markers = _from_json(form.front_side_triage_markers_json)
+    body_diagram = _from_json(form.front_side_body_diagram_json)
+
+    if identity is not None:
+        front_side["identity"] = identity
+    if injury is not None:
+        front_side["injury"] = injury
+    if treatment is not None:
+        front_side["treatment"] = treatment
+    if evacuation is not None:
+        front_side["evacuation"] = evacuation
+    if triage_markers is not None:
+        front_side["triage_markers"] = triage_markers
+    if body_diagram is not None:
+        front_side["body_diagram"] = body_diagram
+
+    back_side = {}
+    stage_log = _from_json(form.back_side_stage_log_json)
+    signature = _from_json(form.back_side_signature_json)
+    if stage_log is not None:
+        back_side["stage_log"] = stage_log
+    if signature is not None:
+        back_side["signature"] = signature
+
+    canonical = {
+        "stub": _from_json(form.stub_json),
+        "front_side": front_side if front_side else None,
+        "back_side": back_side if back_side else None,
+        "meta_legal_rules": _from_json(form.meta_legal_rules_json),
+    }
+    if not canonical["stub"] and not canonical["front_side"] and not canonical["back_side"] and not canonical["meta_legal_rules"]:
+        return _legacy_to_canonical(form)
+    return canonical
+
+
+def _form100_response_payload(form: Form100Record) -> dict:
+    canonical = _canonical_from_form(form)
+    payload = {
+        "id": form.id,
+        "case_id": form.case_id,
+        "document_number": form.document_number,
+        "injury_datetime": form.injury_datetime,
+        "injury_location": form.injury_location,
+        "injury_mechanism": form.injury_mechanism,
+        "diagnosis_summary": form.diagnosis_summary,
+        "documented_by": form.documented_by,
+        "treatment_summary": form.treatment_summary,
+        "evacuation_recommendation": form.evacuation_recommendation,
+        "commander_notified": form.commander_notified,
+        "notes": form.notes,
+        "stub": canonical.get("stub"),
+        "front_side": canonical.get("front_side"),
+        "back_side": canonical.get("back_side"),
+        "meta_legal_rules": canonical.get("meta_legal_rules"),
+        "created_at": form.created_at,
+        "updated_at": form.updated_at,
+        "voided": form.voided,
+    }
+    return Form100Response.model_validate(payload).model_dump(mode="json")
 
 def _apply_body_to_case(case: Case, body: CaseCreate | CaseUpdate) -> None:
     for field, value in body.model_dump(exclude_unset=True).items():
@@ -157,7 +274,7 @@ async def get_case(
     detail.sub_medications = medications
     detail.observations = vitals
     detail.march_assessments = march
-    detail.form100 = form100
+    detail.form100 = Form100Response.model_validate(_form100_response_payload(form100)) if form100 else None
     detail.evacuation = evac
     detail.events = events
 

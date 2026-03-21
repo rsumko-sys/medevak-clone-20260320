@@ -275,3 +275,10 @@ async def test_form100_canonical_nested_structure_and_stage_log_semantics(form10
     assert read_data["front_side"]["triage_markers"]["blue_radiation_measures"] is True
     assert read_data["front_side"]["evacuation"]["evacuation_destination"] == "Role 3"
     assert read_data["evacuation_recommendation"] == "Ground transfer"
+
+    case_resp = await client.get(f"/api/v1/cases/{case_id}")
+    assert case_resp.status_code == 200
+    case_form100 = case_resp.json()["data"]["form100"]
+    assert case_form100 is not None
+    assert case_form100["front_side"]["triage_markers"]["black_isolation"] is True
+    assert case_form100["back_side"]["stage_log"][1]["stage_name"] == "ROLE_4"

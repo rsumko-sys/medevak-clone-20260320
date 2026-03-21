@@ -1,5 +1,6 @@
 """PDF exporter — real PDF bytes via ReportLab."""
 from io import BytesIO
+import json
 from typing import Any
 
 from reportlab.lib.pagesizes import A4
@@ -45,6 +46,23 @@ def export_case_to_pdf(case: dict[str, Any]) -> bytes:
         t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.5, "#ccc")]))
         story.append(t)
         story.append(Spacer(1, 0.3 * cm))
+
+        canonical_rows = []
+        if form_100.get("stub"):
+            canonical_rows.append(["Stub", json.dumps(form_100.get("stub"), ensure_ascii=False)])
+        if form_100.get("front_side"):
+            canonical_rows.append(["Front Side", json.dumps(form_100.get("front_side"), ensure_ascii=False)])
+        if form_100.get("back_side"):
+            canonical_rows.append(["Back Side", json.dumps(form_100.get("back_side"), ensure_ascii=False)])
+        if form_100.get("meta_legal_rules"):
+            canonical_rows.append(["Meta Legal Rules", json.dumps(form_100.get("meta_legal_rules"), ensure_ascii=False)])
+
+        if canonical_rows:
+            story.append(Paragraph("Form 100 Canonical Sections", styles["Heading3"]))
+            t2 = Table([["Section", "Payload"], *canonical_rows], colWidths=[4 * cm, 11 * cm])
+            t2.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), "#e0e0e0"), ("GRID", (0, 0), (-1, -1), 0.5, "#ccc")]))
+            story.append(t2)
+            story.append(Spacer(1, 0.3 * cm))
 
     march_notes = case.get("march_notes") or {}
     march_rows = [
