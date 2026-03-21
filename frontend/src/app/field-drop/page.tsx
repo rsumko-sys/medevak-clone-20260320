@@ -498,6 +498,7 @@ export default function FieldDropPage() {
   const [radioDelivered,   setRadioDelivered]   = useState(false)
   const [pendingQueue,     setPendingQueue]     = useState<PendingAction[]>([])
   const [flushingQueue,    setFlushingQueue]    = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Finalize state
   const [finalizeMethod, setFinalizeMethod] = useState<'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL'>('RADIO')
@@ -570,6 +571,11 @@ export default function FieldDropPage() {
     void flushPendingQueue()
   }, [online, pendingQueue.length])
 
+  useEffect(() => {
+    if (!online) return
+    void loadAll(false, 'postAction')
+  }, [online])
+
   const pendingInventoryKeys = useMemo(() => {
     const set = new Set<string>()
     for (const action of pendingQueue) {
@@ -596,15 +602,28 @@ export default function FieldDropPage() {
     if (source === 'auto' && mutationCountRef.current > 0) return
 
     const seq = ++loadAllSeqRef.current
+
+    const fetchAllWithRetry = async (attempt = 1): Promise<[FieldPosition[], FieldRequest[], FieldDispatchLog[]]> => {
+      try {
+        return await Promise.all([
+          listFieldDropPositions(),
+          listFieldDropRequests(),
+          listFieldDropLogs(40),
+        ])
+      } catch (error) {
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          return fetchAllWithRetry(attempt + 1)
+        }
+        throw error
+      }
+    }
+
     try {
       if (initial) setLoading(true)
       else if (source === 'manual') setRefreshing(true)
 
-      const [pos, reqs, lg] = await Promise.all([
-        listFieldDropPositions(),
-        listFieldDropRequests(),
-        listFieldDropLogs(40),
-      ])
+      const [pos, reqs, lg] = await fetchAllWithRetry()
 
       // Ignore stale response that returned out of order.
       if (seq !== loadAllSeqRef.current) return
@@ -613,6 +632,7 @@ export default function FieldDropPage() {
       setPositions(pos)
       setRequests(reqs)
       setLogs(lg)
+      setLoadError(null)
 
       if (reqs.length === 0) {
         setSelectedId('')
@@ -624,7 +644,10 @@ export default function FieldDropPage() {
         setSelectedId(reqs[0].id)
       }
     } catch {
-      toast.error('Помилка завантаження. Перевірте з\'єднання та оновіть сторінку.')
+      setLoadError('Не вдалося оновити дані (позиції/запити/журнал). Показано останній успішний стан.')
+      if (source !== 'auto') {
+        toast.error('Помилка завантаження. Показано останні доступні дані.')
+      }
     } finally {
       if (seq === loadAllSeqRef.current) {
         setLoading(false)
@@ -1013,6 +1036,23 @@ export default function FieldDropPage() {
                 Flush Now
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {loadError && (
+        <div className="wolf-panel p-3 border-red-800/40 bg-red-950/10">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="text-[10px] uppercase tracking-widest text-red-300">
+              {loadError}
+            </div>
+            <button
+              onClick={() => void loadAll(false, 'manual')}
+              className="wolf-btn text-[10px] px-2 py-1"
+              type="button"
+            >
+              Retry
+            </button>
           </div>
         </div>
       )}
