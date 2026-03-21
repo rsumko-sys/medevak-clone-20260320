@@ -284,7 +284,137 @@ async def test_zero_inventory_is_failed(client):
 
 
 # ---------------------------------------------------------------------------
-# Test 6 — parallel double commit against Postgres (requires PG_TEST_URL env)
+# Test 6 — finalize after successful commit → COMPLETED
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_fresh_finalize(client):
+    ac, engine = client
+    async with async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)() as s:
+        _, req_id = await _seed(s)
+
+    # First commit the request
+    r1 = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/commit",
+        headers={"X-User-ID": "test-user", "Idempotency-Key": f"commit-fin-{uuid.uuid4()}"},
+    )
+    assert r1.status_code == 200
+    prev_status = r1.json()["data"]["request_status"]
+    assert prev_status in {"DISPATCHED", "PARTIAL"}
+
+    # Now finalize
+    r2 = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/finalize",
+        json={"result": "completed", "method": "RADIO", "note": "confirmed by radio"},
+        headers={"X-User-ID": "test-user", "Idempotency-Key": f"fin-{uuid.uuid4()}"},
+    )
+    assert r2.status_code == 200
+    d = r2.json()["data"]
+    assert d["ok"] is True
+    assert d["request_status"] == "COMPLETED"
+    assert d["previous_status"] == prev_status
+    assert d["method"] == "RADIO"
+    assert d["note"] == "confirmed by radio"
+    assert d["finalized_by"] is not None  # dev-auth maps to dev-user
+    assert d["finalized_at"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Test 7 — repeat finalize (idempotent)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_repeat_finalize(client):
+    ac, engine = client
+    async with async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)() as s:
+        _, req_id = await _seed(s)
+
+    # Commit
+    await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/commit",
+        headers={"X-User-ID": "test-user", "Idempotency-Key": f"c-{uuid.uuid4()}"},
+    )
+
+    # Finalize once
+    r1 = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/finalize",
+        json={"result": "completed", "method": "MANUAL"},
+        headers={"X-User-ID": "test-user", "Idempotency-Key": f"fin1-{uuid.uuid4()}"},
+    )
+    assert r1.json()["data"]["request_status"] == "COMPLETED"
+
+    # Finalize a second time (different key, already COMPLETED) → still ok
+    r2 = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/finalize",
+        json={"result": "completed", "method": "MANUAL"},
+        headers={"X-User-ID": "test-user", "Idempotency-Key": f"fin2-{uuid.uuid4()}"},
+    )
+    assert r2.status_code == 200
+    d2 = r2.json()["data"]
+    assert d2["ok"] is True
+    assert d2["request_status"] == "COMPLETED"
+
+
+# ---------------------------------------------------------------------------
+# Test 8 — finalize from DRAFT → 409
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_finalize_from_draft_is_rejected(client):
+    ac, engine = client
+    async with async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)() as s:
+        _, req_id = await _seed(s)
+    # Don't commit — request is still DRAFT
+    r = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/finalize",
+        json={"result": "completed", "method": "VOICE"},
+        headers={"X-User-ID": "test-user"},
+    )
+    assert r.status_code == 409
+
+
+# ---------------------------------------------------------------------------
+# Test 9 — finalize from FAILED → 409
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_finalize_from_failed_is_rejected(client):
+    ac, engine = client
+    async with async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)() as s:
+        pos_id = str(uuid.uuid4())
+        req_id = str(uuid.uuid4())
+        s.add(FieldPosition(id=pos_id, name="Echo", x=0.0, y=0.0))
+        # Zero stock forces FAILED
+        s.add(FieldInventoryItem(
+            id=str(uuid.uuid4()), position_id=pos_id, item_name="bandage", qty=0
+        ))
+        s.add(FieldSupplyRequest(
+            id=req_id, x=0.5, y=0.5, urgency="high", radius_km=50.0,
+            status="DRAFT", created_by="test-user"
+        ))
+        s.add(FieldSupplyNeed(
+            id=str(uuid.uuid4()), request_id=req_id, item_name="bandage", qty=2
+        ))
+        await s.commit()
+
+    # Commit → FAILED
+    rc = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/commit",
+        headers={"X-User-ID": "test-user"},
+    )
+    assert rc.json()["data"]["request_status"] == "FAILED"
+
+    # Now try to finalize → 409
+    r = await ac.post(
+        f"/api/v1/field-drop/requests/{req_id}/finalize",
+        json={"result": "completed", "method": "DISCORD"},
+        headers={"X-User-ID": "test-user"},
+    )
+    assert r.status_code == 409
+
+
+# ---------------------------------------------------------------------------
+# Test 10 — parallel double commit against Postgres (requires PG_TEST_URL env)
 # ---------------------------------------------------------------------------
 
 PG_TEST_URL = os.getenv("PG_TEST_URL")

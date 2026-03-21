@@ -170,6 +170,19 @@ export type FieldRequestStatus =
   | 'FAILED'
   | 'COMPLETED'
 
+export type FieldFinalizeMethod = 'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL'
+
+export interface FieldFinalizeResponse {
+  request_id: string
+  ok: boolean
+  previous_status: FieldRequestStatus
+  request_status: 'COMPLETED'
+  finalized_at: string | null
+  finalized_by: string | null
+  method: FieldFinalizeMethod
+  note?: string | null
+}
+
 export interface FieldRequest {
   id: string
   x: number
@@ -179,6 +192,10 @@ export interface FieldRequest {
   status: FieldRequestStatus
   created_at: string
   required: FieldNeed[]
+  finalized_at?: string | null
+  finalized_by?: string | null
+  finalize_method?: string | null
+  finalize_note?: string | null
 }
 
 export interface FieldRecommendationRow {

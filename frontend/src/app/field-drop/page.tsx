@@ -24,6 +24,7 @@ import {
   commitFieldDropRequest,
   createFieldDropPosition,
   createFieldDropRequest,
+  finalizeFieldDropRequest,
   getFieldDropRecommendation,
   listFieldDropLogs,
   listFieldDropPositions,
@@ -75,7 +76,17 @@ type CommitRequestAction = {
   requestId: string
 }
 
-type PendingAction = InventoryDeltaAction | CommitRequestAction
+type FinalizeRequestAction = {
+  id: string
+  type: 'finalize_request'
+  createdAt: number
+  status: 'pending' | 'failed'
+  requestId: string
+  method: 'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL'
+  note?: string
+}
+
+type PendingAction = InventoryDeltaAction | CommitRequestAction | FinalizeRequestAction
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -105,6 +116,10 @@ function statusStyle(status?: string | null) {
   if (s === 'FAILED') return 'text-red-300 bg-red-950/30 border-red-700'
   if (s === 'RECOMMENDED') return 'text-blue-300 bg-blue-950/40 border-blue-800'
   return 'text-gray-300 bg-gray-800 border-gray-600'
+}
+
+function canFinalize(status?: string | null) {
+  return status === 'DISPATCHED' || status === 'PARTIAL'
 }
 
 // ─── Connectivity hook ────────────────────────────────────────────────────────
@@ -484,6 +499,11 @@ export default function FieldDropPage() {
   const [pendingQueue,     setPendingQueue]     = useState<PendingAction[]>([])
   const [flushingQueue,    setFlushingQueue]    = useState(false)
 
+  // Finalize state
+  const [finalizeMethod, setFinalizeMethod] = useState<'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL'>('RADIO')
+  const [finalizeNote, setFinalizeNote] = useState('')
+  const [finalizingRequestIds, setFinalizingRequestIds] = useState<string[]>([])
+
   // Loading states
   const [loading,          setLoading]          = useState(true)
   const [refreshing,       setRefreshing]       = useState(false)
@@ -675,6 +695,21 @@ export default function FieldDropPage() {
             }
           }
 
+          if (action.type === 'finalize_request') {
+            const result = await finalizeFieldDropRequest(
+              action.requestId,
+              {
+                result: 'completed',
+                method: action.method,
+                note: action.note,
+              },
+              action.id,
+            )
+            if (result.request_id !== action.requestId) {
+              throw new Error('Finalize request_id mismatch during queue replay')
+            }
+          }
+
           setPendingQueue(prev => prev.filter(p => p.id !== action.id))
         } catch {
           setPendingQueue(prev => prev.map(p => (p.id === action.id ? { ...p, status: 'failed' } : p)))
@@ -859,6 +894,53 @@ export default function FieldDropPage() {
     [requests, selectedId],
   )
 
+  async function handleFinalizeRequest(requestId: string) {
+    const opId = createOpId(`finalize:${requestId}`)
+
+    if (!online) {
+      const alreadyQueued = pendingQueue.some(
+        a => a.type === 'finalize_request' && a.requestId === requestId && a.status === 'pending',
+      )
+      if (alreadyQueued) {
+        toast.info('Фіналізацію вже поставлено в чергу')
+        return
+      }
+      enqueueAction({
+        id: opId,
+        type: 'finalize_request',
+        createdAt: Date.now(),
+        status: 'pending',
+        requestId,
+        method: finalizeMethod,
+        note: finalizeNote || undefined,
+      })
+      toast.success('Офлайн: підтвердження поставлено в чергу')
+      return
+    }
+
+    setFinalizingRequestIds(prev => [...prev, requestId])
+    mutationCountRef.current += 1
+    try {
+      const result = await finalizeFieldDropRequest(
+        requestId,
+        { result: 'completed', method: finalizeMethod, note: finalizeNote || undefined },
+        opId,
+      )
+      if (result.request_id !== requestId) {
+        throw new Error('Finalize request_id mismatch')
+      }
+      toast.success('Скид підтверджено')
+      setFinalizeNote('')
+      await loadAll(false, 'postAction')
+      void loadRec(requestId)
+    } catch {
+      toast.error('Не вдалося підтвердити скид. Перевірте з\'єднання та спробуйте ще раз.')
+    } finally {
+      mutationCountRef.current -= 1
+      setFinalizingRequestIds(prev => prev.filter(id => id !== requestId))
+    }
+  }
+
   const selectedCommitQueued = selectedId ? pendingCommitRequestIds.has(selectedId) : false
   const pendingCount = pendingQueue.filter(a => a.status === 'pending').length
   const failedCount = pendingQueue.filter(a => a.status === 'failed').length
@@ -982,6 +1064,75 @@ export default function FieldDropPage() {
                 toast.success('Статус передачі по рації оновлено')
               }}
             />
+
+            {/* ⑥ FINALIZE — visible only when DISPATCHED or PARTIAL */}
+            {selectedRequest && canFinalize(selectedRequest.status) && (
+              <div className="wolf-panel mt-4 space-y-3">
+                <div className="wolf-title text-[10px] text-gray-500 uppercase tracking-widest">ПІДТВЕРДЖЕННЯ СКИДУ</div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="block text-xs opacity-70 mb-1">Спосіб</label>
+                    <select
+                      className="wolf-input w-full text-xs"
+                      value={finalizeMethod}
+                      onChange={e => setFinalizeMethod(e.target.value as 'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL')}
+                    >
+                      <option value="RADIO">RADIO</option>
+                      <option value="DISCORD">DISCORD</option>
+                      <option value="VOICE">VOICE</option>
+                      <option value="MANUAL">MANUAL</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs opacity-70 mb-1">Примітка</label>
+                    <input
+                      className="wolf-input w-full text-xs"
+                      value={finalizeNote}
+                      onChange={e => setFinalizeNote(e.target.value)}
+                      placeholder="підтвердили по рації"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  className="wolf-btn-danger w-full flex items-center justify-center gap-2 disabled:opacity-40"
+                  disabled={finalizingRequestIds.includes(selectedRequest.id)}
+                  onClick={() => void handleFinalizeRequest(selectedRequest.id)}
+                >
+                  {finalizingRequestIds.includes(selectedRequest.id)
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> ПІДТВЕРДЖУЮ...</>
+                    : <><Check className="w-4 h-4" /> ПІДТВЕРДИТИ СКИД</>
+                  }
+                </button>
+              </div>
+            )}
+
+            {/* ⑦ COMPLETED — show summary instead of CTA */}
+            {selectedRequest?.status === 'COMPLETED' && (
+              <div className="wolf-panel mt-4 space-y-2">
+                <div className="text-[10px] text-green-400 uppercase tracking-widest font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> СКИД ПІДТВЕРДЖЕНО
+                </div>
+                <div className="text-xs text-gray-300">
+                  <span className="opacity-60">Метод:</span>{' '}
+                  {String(selectedRequest.finalize_method ?? '—')}
+                </div>
+                <div className="text-xs text-gray-300">
+                  <span className="opacity-60">Час:</span>{' '}
+                  {selectedRequest.finalized_at ? fmtTime(selectedRequest.finalized_at) : '—'}
+                </div>
+                <div className="text-xs text-gray-300">
+                  <span className="opacity-60">Хто:</span>{' '}
+                  {String(selectedRequest.finalized_by ?? '—')}
+                </div>
+                {selectedRequest.finalize_note && (
+                  <div className="text-xs text-gray-400 italic">{selectedRequest.finalize_note}</div>
+                )}
+              </div>
+            )}
+
           </div>
 
           {/* New Request (collapsible — secondary action) */}

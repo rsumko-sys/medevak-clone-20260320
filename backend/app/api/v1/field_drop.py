@@ -159,16 +159,16 @@ async def _get_inventory_item_for_update(
     return result.scalar_one_or_none()
 
 
-    async def _get_request_for_update(
-        session: AsyncSession,
-        request_id: str,
-    ) -> Optional[FieldSupplyRequest]:
-        result = await session.execute(
-            select(FieldSupplyRequest)
-            .where(FieldSupplyRequest.id == request_id)
-            .with_for_update()
-        )
-        return result.scalar_one_or_none()
+async def _get_request_for_update(
+    session: AsyncSession,
+    request_id: str,
+) -> Optional[FieldSupplyRequest]:
+    result = await session.execute(
+        select(FieldSupplyRequest)
+        .where(FieldSupplyRequest.id == request_id)
+        .with_for_update()
+    )
+    return result.scalar_one_or_none()
 
 
 async def _compute_recommendation(
@@ -474,43 +474,13 @@ async def list_requests(
             status=req.status,
             created_at=req.created_at,
             required=needs_by_request.get(req.id, []),
+            finalized_at=req.finalized_at.isoformat() if req.finalized_at else None,
+            finalized_by=req.finalized_by,
+            finalize_method=req.finalize_method,
+            finalize_note=req.finalize_note,
         ).model_dump(mode="json")
         for req in reqs
     ]
-        data = [
-            FieldRequestResponse(
-                id=req.id,
-                x=req.x,
-                y=req.y,
-                urgency=req.urgency,
-                radius_km=req.radius_km,
-                status=req.status,
-                created_at=req.created_at,
-                required=needs_by_request.get(req.id, []),
-                finalized_at=req.finalized_at.isoformat() if req.finalized_at else None,
-                finalized_by=req.finalized_by,
-                finalize_method=req.finalize_method,
-                finalize_note=req.finalize_note,
-            ).model_dump(mode="json")
-            for req in reqs
-        ]
-        data = [
-            FieldRequestResponse(
-                id=req.id,
-                x=req.x,
-                y=req.y,
-                urgency=req.urgency,
-                radius_km=req.radius_km,
-                status=req.status,
-                created_at=req.created_at,
-                required=needs_by_request.get(req.id, []),
-                finalized_at=req.finalized_at.isoformat() if req.finalized_at else None,
-                finalized_by=req.finalized_by,
-                finalize_method=req.finalize_method,
-                finalize_note=req.finalize_note,
-            ).model_dump(mode="json")
-            for req in reqs
-        ]
     return envelope(data, request_id=request_id)
 
 
@@ -575,6 +545,10 @@ async def create_request(
         status=req.status,
         created_at=req.created_at,
         required=norm_required,
+        finalized_at=None,
+        finalized_by=None,
+        finalize_method=None,
+        finalize_note=None,
     ).model_dump(mode="json")
 
     if idempotency_key:
@@ -807,6 +781,122 @@ async def commit_request_recommendation(
 
     if idempotency_key:
         # save_idempotent_response commits the session internally
+        await save_idempotent_response(
+            session,
+            idempotency_key,
+            ctx.user_id,
+            path,
+            200,
+            response_data,
+            payload_hash=payload_hash,
+        )
+    else:
+        await session.commit()
+
+    return envelope(response_data, request_id=req_trace_id)
+
+
+@router.post("/requests/{request_id}/finalize", response_model=dict)
+async def finalize_field_drop_request(
+    request_id: str,
+    payload: Annotated[FieldFinalizePayload, Body(...)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ctx: Annotated[SecurityContext, Depends(require_permission(Permission.UPDATE_MEDICAL))],
+    req_trace_id: Annotated[str, Depends(get_request_id)],
+    idempotency_key: Annotated[Optional[str], Header(alias="Idempotency-Key")] = None,
+):
+    path = f"/field-drop/requests/{request_id}/finalize"
+    payload_hash = payload_fingerprint(
+        {
+            "request_id": request_id,
+            "result": payload.result,
+            "method": payload.method,
+            "note": payload.note,
+        }
+    )
+
+    req_obj = await _get_request_for_update(session, request_id)
+    if not req_obj:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    if idempotency_key:
+        existing = await get_idempotent_response(
+            session,
+            idempotency_key,
+            ctx.user_id,
+            request_path=path,
+            payload_hash=payload_hash,
+        )
+        if existing:
+            if existing.get("conflict"):
+                raise HTTPException(status_code=409, detail="Idempotency key re-used with different payload")
+            return envelope(existing["body"], request_id=req_trace_id)
+
+    if req_obj.status == "COMPLETED":
+        response_data = FieldFinalizeResponse(
+            request_id=req_obj.id,
+            ok=True,
+            previous_status="COMPLETED",
+            request_status="COMPLETED",
+            finalized_at=req_obj.finalized_at.isoformat() if req_obj.finalized_at else None,
+            finalized_by=req_obj.finalized_by,
+            method=req_obj.finalize_method or "MANUAL",
+            note=req_obj.finalize_note,
+        ).model_dump(mode="json")
+
+        if idempotency_key:
+            await save_idempotent_response(
+                session,
+                idempotency_key,
+                ctx.user_id,
+                path,
+                200,
+                response_data,
+                payload_hash=payload_hash,
+            )
+        return envelope(response_data, request_id=req_trace_id)
+
+    if req_obj.status not in {"DISPATCHED", "PARTIAL"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Request cannot be finalized from status {req_obj.status}",
+        )
+
+    previous_status = req_obj.status
+
+    req_obj.status = "COMPLETED"
+    req_obj.finalized_at = datetime.utcnow()
+    req_obj.finalized_by = ctx.user_id
+    req_obj.finalize_method = payload.method
+    req_obj.finalize_note = payload.note
+
+    await log_audit(
+        session=session,
+        table_name="field_supply_requests",
+        row_id=req_obj.id,
+        action="FINALIZE",
+        old_values={"status": previous_status},
+        new_values={
+            "status": "COMPLETED",
+            "finalized_by": ctx.user_id,
+            "finalize_method": payload.method,
+            "finalize_note": payload.note,
+        },
+        user_id=ctx.user_id,
+    )
+
+    response_data = FieldFinalizeResponse(
+        request_id=req_obj.id,
+        ok=True,
+        previous_status=previous_status,
+        request_status="COMPLETED",
+        finalized_at=req_obj.finalized_at.isoformat() if req_obj.finalized_at else None,
+        finalized_by=req_obj.finalized_by,
+        method=req_obj.finalize_method or payload.method,
+        note=req_obj.finalize_note,
+    ).model_dump(mode="json")
+
+    if idempotency_key:
         await save_idempotent_response(
             session,
             idempotency_key,

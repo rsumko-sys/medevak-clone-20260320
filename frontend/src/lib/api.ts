@@ -5,6 +5,7 @@ import {
   CaseItem,
   FieldCommit,
   FieldDispatchLog,
+  FieldFinalizeResponse,
   FieldNeed,
   FieldPosition,
   FieldRecommendation,
@@ -272,4 +273,20 @@ export async function commitFieldDropRequest(requestId: string, idempotencyKey?:
 
 export async function listFieldDropLogs(limit = 20) {
   return apiGet<FieldDispatchLog[]>(`/field-drop/logs?limit=${limit}`)
+}
+
+export async function finalizeFieldDropRequest(
+  requestId: string,
+  payload: {
+    result: 'completed'
+    method: 'RADIO' | 'DISCORD' | 'VOICE' | 'MANUAL'
+    note?: string
+  },
+  idempotencyKey?: string,
+) {
+  return apiPost<FieldFinalizeResponse>(
+    `/field-drop/requests/${requestId}/finalize`,
+    payload,
+    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+  )
 }

@@ -52,13 +52,12 @@ class FieldRequestResponse(BaseModel):
     status: str
     created_at: datetime
     required: list[FieldNeedCreate]
+    finalized_at: Optional[str] = None
+    finalized_by: Optional[str] = None
+    finalize_method: Optional[str] = None
+    finalize_note: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-        finalized_at: Optional[str] = None
-        finalized_by: Optional[str] = None
-        finalize_method: Optional[str] = None
-        finalize_note: Optional[str] = None
 
 
 class FieldRecommendationRow(BaseModel):
@@ -108,18 +107,18 @@ class FieldCommitResponse(BaseModel):
     log_ids: list[str] = Field(default_factory=list)
 
 
-    class FieldFinalizePayload(BaseModel):
-        result: Literal["completed"]
-        method: Literal["RADIO", "DISCORD", "VOICE", "MANUAL"]
-        note: Optional[str] = None
+class FieldFinalizePayload(BaseModel):
+    result: Literal["completed"]
+    method: Literal["RADIO", "DISCORD", "VOICE", "MANUAL"]
+    note: Optional[str] = None
 
 
-    class FieldFinalizeResponse(BaseModel):
-        request_id: str
-        ok: bool
-        previous_status: str
-        request_status: str
-        finalized_at: Optional[str] = None
-        finalized_by: Optional[str] = None
-        method: str
-        note: Optional[str] = None
+class FieldFinalizeResponse(BaseModel):
+    request_id: str
+    ok: bool
+    previous_status: str
+    request_status: str
+    finalized_at: Optional[str] = None
+    finalized_by: Optional[str] = None
+    method: str
+    note: Optional[str] = None

@@ -51,10 +51,10 @@ class FieldSupplyRequest(Base):
     created_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-        finalized_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-        finalized_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-        finalize_method: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-        finalize_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    finalized_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    finalized_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    finalize_method: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    finalize_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     __table_args__ = (Index("ix_field_supply_requests_created_at", "created_at"),)
 
