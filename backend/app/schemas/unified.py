@@ -280,3 +280,5 @@ class CaseDetailResponse(CaseResponse):
     march_assessments: List[MarchResponse] = []
     evacuation: Optional[EvacuationResponse] = None
     events: List[EventResponse] = []
+    form100: Optional[dict[str, Any]] = None
+    form100_validation_errors: List[str] = []

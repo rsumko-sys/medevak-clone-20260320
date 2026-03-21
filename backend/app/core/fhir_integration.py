@@ -50,6 +50,18 @@ class FHIRMapper:
         "ABDOMEN": "81608000", # Abdomen structure
         "EXTREMITY": "67826004" # Extremity structure
     }
+
+    # Canonical FHIR observation codings for core Form 100 vitals.
+    VITALS_LOINC = {
+        "heart_rate": ("8867-4", "Heart rate", "/min"),
+        "respiratory_rate": ("9279-1", "Respiratory rate", "/min"),
+        "systolic_bp": ("8480-6", "Systolic blood pressure", "mm[Hg]"),
+        "diastolic_bp": ("8462-4", "Diastolic blood pressure", "mm[Hg]"),
+        "spo2_percent": ("59408-5", "Oxygen saturation in Arterial blood by Pulse oximetry", "%"),
+        "temperature_celsius": ("8310-5", "Body temperature", "Cel"),
+        "gcs_total": ("9269-2", "Glasgow coma score total", "{score}"),
+        "pain_score": ("72514-3", "Pain severity - 0-10 verbal numeric rating", "{score}"),
+    }
     
     @classmethod
     def case_to_patient(cls, case: Case) -> Optional[Patient]:
@@ -195,17 +207,55 @@ class FHIRMapper:
         fhir_observations = []
         
         for obs in observations:
-            observation = Observation(
-                id=f"observation-{obs.id}",
-                status="final",
-                subject=Reference(reference=f"Patient/{obs.case_id}")
-            )
-            
-            observation.code = CodeableConcept(
-                text=str(obs.heart_rate)
-            )
-            
-            fhir_observations.append(observation)
+            measured_at = obs.measured_at.isoformat() if obs.measured_at else None
+            for field, (loinc_code, display, ucum_unit) in cls.VITALS_LOINC.items():
+                value = getattr(obs, field, None)
+                if value is None:
+                    continue
+
+                observation = Observation(
+                    id=f"observation-{obs.id}-{field}",
+                    status="final",
+                    subject=Reference(reference=f"Patient/{obs.case_id}"),
+                    code=CodeableConcept(
+                        coding=[
+                            Coding(
+                                system="http://loinc.org",
+                                code=loinc_code,
+                                display=display,
+                            )
+                        ]
+                    ),
+                    valueQuantity={
+                        "value": float(value),
+                        "unit": ucum_unit,
+                        "system": "http://unitsofmeasure.org",
+                        "code": ucum_unit,
+                    },
+                )
+                if measured_at:
+                    observation.effectiveDateTime = measured_at
+                fhir_observations.append(observation)
+
+            if obs.avpu:
+                avpu_observation = Observation(
+                    id=f"observation-{obs.id}-avpu",
+                    status="final",
+                    subject=Reference(reference=f"Patient/{obs.case_id}"),
+                    code=CodeableConcept(
+                        coding=[
+                            Coding(
+                                system="urn:medevak:observation-code",
+                                code="avpu",
+                                display="AVPU consciousness scale",
+                            )
+                        ]
+                    ),
+                    valueString=obs.avpu,
+                )
+                if measured_at:
+                    avpu_observation.effectiveDateTime = measured_at
+                fhir_observations.append(avpu_observation)
         
         return fhir_observations
     

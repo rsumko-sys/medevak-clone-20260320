@@ -84,13 +84,25 @@ def validate_fhir_bundle(bundle: Dict[str, Any]) -> List[str]:
     if bundle.get("resourceType") != "Bundle":
         errors.append("Missing or incorrect resourceType (should be 'Bundle')")
     
-    if bundle.get("type") != "collection":
-        errors.append("Bundle type should be 'collection'")
+    bundle_type = bundle.get("type")
+    if bundle_type not in {"collection", "document", "transaction", "message"}:
+        errors.append("Bundle type should be one of: collection, document, transaction, message")
     
     if "entry" not in bundle:
         errors.append("Bundle must have an 'entry' field")
     elif not isinstance(bundle["entry"], list):
         errors.append("Bundle entry must be a list")
+    else:
+        for idx, entry in enumerate(bundle["entry"]):
+            if not isinstance(entry, dict):
+                errors.append(f"Bundle entry[{idx}] must be an object")
+                continue
+            resource = entry.get("resource")
+            if not isinstance(resource, dict):
+                errors.append(f"Bundle entry[{idx}].resource must be an object")
+                continue
+            if not resource.get("resourceType"):
+                errors.append(f"Bundle entry[{idx}].resource.resourceType is required")
     
     return errors
 

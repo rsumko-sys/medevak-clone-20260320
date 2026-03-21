@@ -7,6 +7,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.mappers.form100 import build_form100, validate_form100_minimum
+
 
 def export_case_to_pdf(case: dict[str, Any]) -> bytes:
     """Export case to PDF bytes."""
@@ -52,6 +54,29 @@ def export_case_to_pdf(case: dict[str, Any]) -> bytes:
         t = Table(data)
         t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), "#e0e0e0"), ("GRID", (0, 0), (-1, -1), 0.5, "#ccc")]))
         story.append(t)
+
+    form100 = build_form100(case)
+    form100_errors = validate_form100_minimum(form100)
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(Paragraph("Form 100 Canonical Summary", styles["Heading2"]))
+    form100_data = [
+        ["Standard", str(form100.get("standard", "—"))],
+        ["Version", str(form100.get("version", "—"))],
+        ["Case ID", str(form100.get("identity", {}).get("case_id") or "—")],
+        ["Triage", str(form100.get("triage", {}).get("category") or "—")],
+        ["Mechanism", str(form100.get("incident", {}).get("mechanism") or "—")],
+        ["Validation", "OK" if not form100_errors else "; ".join(form100_errors)],
+    ]
+    form100_table = Table(form100_data, colWidths=[5 * cm, 10 * cm])
+    form100_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), "#f2f2f2"),
+                ("GRID", (0, 0), (-1, -1), 0.5, "#ccc"),
+            ]
+        )
+    )
+    story.append(form100_table)
 
     doc.build(story)
     return buffer.getvalue()

@@ -14,6 +14,7 @@ from app.core.audit_helper import log_audit
 from app.core.config import CASES_CREATE_RATE_LIMIT
 from app.core.sync_helper import enqueue_sync
 from app.core.utils import envelope
+from app.mappers.form100 import build_form100, validate_form100_minimum
 
 # Models
 from app.models.cases import Case
@@ -121,6 +122,8 @@ async def get_case(
     detail.march_assessments = march
     detail.evacuation = evac
     detail.events = events
+    detail.form100 = build_form100(detail)
+    detail.form100_validation_errors = validate_form100_minimum(detail.form100)
 
     return envelope(detail.model_dump(mode='json'), request_id=request_id)
 
