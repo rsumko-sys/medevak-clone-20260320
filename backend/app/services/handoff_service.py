@@ -26,7 +26,6 @@ class HandoffService:
             id=handoff_id,
             case_id=case_id,
             mist_summary="",
-            operator_id=self._user_id,
         )
         self._session.add(handoff)
         await self._session.commit()
@@ -48,7 +47,7 @@ class HandoffService:
             await self._session.refresh(h)
             return {"id": h.id, "case_id": h.case_id, "mist_summary": h.mist_summary}
         handoff_id = str(uuid.uuid4())
-        handoff = CaseHandoff(id=handoff_id, case_id=case_id, mist_summary=mist, operator_id=self._user_id)
+        handoff = CaseHandoff(id=handoff_id, case_id=case_id, mist_summary=mist)
         self._session.add(handoff)
         await self._session.commit()
         await self._session.refresh(handoff)

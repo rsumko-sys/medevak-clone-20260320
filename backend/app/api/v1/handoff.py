@@ -12,6 +12,7 @@ from app.api.deps import get_current_user, get_request_id, get_session
 from app.core.utils import envelope
 from app.models.cases import Case
 from app.models.evacuation import EvacuationRecord as CaseHandoff
+from app.models.march import MarchAssessment
 from app.models.medications import MedicationAdministration as CaseMedicationAdministration
 
 from app.repositories.base import BaseRepository
@@ -33,7 +34,17 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     mechanism = ""
     injuries: list = []
     signs: dict = {"vitals": []}
-    treatment: dict = {"medications": [], "procedures": []}
+    treatment: dict = {
+        "medications": [],
+        "procedures": [],
+        "march_notes": {
+            "m_notes": None,
+            "a_notes": None,
+            "r_notes": None,
+            "c_notes": None,
+            "h_notes": None,
+        },
+    }
     warnings: list[str] = []
 
     # Mechanism from case
@@ -97,6 +108,27 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     except Exception as e:
         logger.exception("MIST procedures aggregation failed for case %s: %s", case_id, e)
         warnings.append("failed to load procedures")
+
+    # Treatment: MARCH notes (latest assessment)
+    try:
+        march_stmt = (
+            select(MarchAssessment)
+            .where(MarchAssessment.case_id == case_id, MarchAssessment.voided == False)
+            .order_by(MarchAssessment.assessed_at.desc())
+            .limit(1)
+        )
+        march = (await session.execute(march_stmt)).scalars().first()
+        if march:
+            treatment["march_notes"] = {
+                "m_notes": getattr(march, "m_notes", None),
+                "a_notes": getattr(march, "a_notes", None),
+                "r_notes": getattr(march, "r_notes", None),
+                "c_notes": getattr(march, "c_notes", None),
+                "h_notes": getattr(march, "h_notes", None),
+            }
+    except Exception as e:
+        logger.exception("MIST MARCH notes aggregation failed for case %s: %s", case_id, e)
+        warnings.append("failed to load march notes")
 
     mist = {"mechanism": mechanism, "injuries": injuries, "signs": signs, "treatment": treatment}
     return mist, warnings
