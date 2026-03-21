@@ -2,7 +2,7 @@
 FHIR Integration Module for MEDEVAK
 Integrates fhir.resources for standardized healthcare data exchange
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from uuid import uuid4
 
@@ -13,7 +13,7 @@ try:
     from fhir.resources.medicationadministration import MedicationAdministration as FHIRMedicationAdministration
     from fhir.resources.procedure import Procedure as FHIRProcedure
     from fhir.resources.condition import Condition
-    from fhir.resources.bundle import Bundle, BundleEntry, BundleType
+    from fhir.resources.bundle import Bundle, BundleEntry
     from fhir.resources.humanname import HumanName
     from fhir.resources.identifier import Identifier
     from fhir.resources.codeableconcept import CodeableConcept
@@ -81,11 +81,12 @@ class FHIRMapper:
         
         # Name (callsign as primary, full name as secondary)
         if case.callsign:
+            given_names = [case.full_name] if case.full_name else None
             patient.name = [
                 HumanName(
                     use="usual",
                     family=case.callsign,
-                    given=[case.full_name or ""]
+                    given=given_names,
                 )
             ]
         elif case.full_name:
@@ -113,15 +114,17 @@ class FHIRMapper:
         encounter = Encounter(
             id=f"encounter-{case.id}",
             status="finished",
-            class_fhir=CodeableConcept(
-                coding=[
-                    Coding(
-                        system="http://terminology.hl7.org/CodeSystem/v3-ActCode",
-                        code="EMER",
-                        display="Emergency"
-                    )
-                ]
-            ),
+            class_fhir=[
+                CodeableConcept(
+                    coding=[
+                        Coding(
+                            system="http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                            code="EMER",
+                            display="Emergency"
+                        )
+                    ]
+                )
+            ],
             subject=Reference(reference=f"Patient/{case.id}")
         )
         
@@ -212,9 +215,10 @@ class FHIRMapper:
                 value = getattr(obs, field, None)
                 if value is None:
                     continue
+                fhir_obs_id = f"observation-{obs.id}-{field}".replace("_", "-")
 
                 observation = Observation(
-                    id=f"observation-{obs.id}-{field}",
+                    id=fhir_obs_id,
                     status="final",
                     subject=Reference(reference=f"Patient/{obs.case_id}"),
                     code=CodeableConcept(
@@ -239,7 +243,7 @@ class FHIRMapper:
 
             if obs.avpu:
                 avpu_observation = Observation(
-                    id=f"observation-{obs.id}-avpu",
+                    id=f"observation-{obs.id}-avpu".replace("_", "-"),
                     status="final",
                     subject=Reference(reference=f"Patient/{obs.case_id}"),
                     code=CodeableConcept(
@@ -331,8 +335,8 @@ class FHIRMapper:
             
         bundle = Bundle(
             id=f"bundle-{case.id}-{uuid4()}",
-            type=BundleType.collection,
-            timestamp=datetime.utcnow()
+            type="collection",
+            timestamp=datetime.now(timezone.utc)
         )
         
         entries = []
