@@ -56,6 +56,7 @@ export default function BattlefieldPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [recordingLabel, setRecordingLabel] = useState('')
   const [isWhisperConfigured, setIsWhisperConfigured] = useState(false)
+  const [lastMissingWhisperToastAt, setLastMissingWhisperToastAt] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<BlobPart[]>([])
   
@@ -250,7 +251,11 @@ export default function BattlefieldPage() {
 
     refreshWhisperConfig()
     window.addEventListener('focus', refreshWhisperConfig)
-    return () => window.removeEventListener('focus', refreshWhisperConfig)
+    document.addEventListener('visibilitychange', refreshWhisperConfig)
+    return () => {
+      window.removeEventListener('focus', refreshWhisperConfig)
+      document.removeEventListener('visibilitychange', refreshWhisperConfig)
+    }
   }, [])
 
   const toggleMechanism = (mech: MechanismOfInjury) => {
@@ -322,7 +327,11 @@ export default function BattlefieldPage() {
     if (!whisperKey) {
       setIsWhisperConfigured(false)
       setRecordingLabel('Whisper ключ не налаштовано')
-      toast.info('Щоб увімкнути голосовий ввід, додайте whisperApiKey у Налаштуваннях')
+      const now = Date.now()
+      if (now - lastMissingWhisperToastAt > 2500) {
+        toast.info('Щоб увімкнути голосовий ввід, додайте whisperApiKey у Налаштуваннях')
+        setLastMissingWhisperToastAt(now)
+      }
       return
     }
     setIsWhisperConfigured(true)
