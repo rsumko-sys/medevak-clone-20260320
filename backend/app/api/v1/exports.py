@@ -12,6 +12,7 @@ from app.exporters.fhir_exporter import export_case_to_fhir
 from app.exporters.pdf_exporter import export_case_to_pdf
 from app.exporters.qr_exporter import export_case_to_qr
 from app.models.cases import Case
+from app.models.march import MarchAssessment
 from app.models.medications import MedicationAdministration as CaseMedicationAdministration
 from app.models.vitals import VitalsObservation as CaseObservation
 from app.models.procedures import Procedure as CaseProcedure
@@ -19,6 +20,7 @@ from app.models.procedures import Procedure as CaseProcedure
 from app.repositories.medications import MedicationRepository
 from app.repositories.observations import ObservationRepository
 from app.repositories.procedures import ProcedureRepository
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -33,6 +35,13 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
     obs_list = await obs_repo.get_by_case(case_id)
     meds = await med_repo.get_all(filters=[CaseMedicationAdministration.case_id == case_id])
     procs = await proc_repo.get_all(filters=[CaseProcedure.case_id == case_id])
+    march_stmt = (
+        select(MarchAssessment)
+        .where(MarchAssessment.case_id == case_id, MarchAssessment.voided == False)
+        .order_by(MarchAssessment.assessed_at.desc())
+        .limit(1)
+    )
+    latest_march = (await session.execute(march_stmt)).scalars().first()
 
     def _obs(o):
         return {"id": str(o.id), "case_id": str(o.case_id), "observation_type": o.observation_type, "value": o.value}
@@ -54,6 +63,13 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
         "mechanism": case.mechanism,
         "notes": case.notes,
         "triage_code": getattr(case, "triage_code", None),
+        "march_notes": {
+            "m_notes": getattr(latest_march, "m_notes", None),
+            "a_notes": getattr(latest_march, "a_notes", None),
+            "r_notes": getattr(latest_march, "r_notes", None),
+            "c_notes": getattr(latest_march, "c_notes", None),
+            "h_notes": getattr(latest_march, "h_notes", None),
+        },
         "observations": [_obs(o) for o in obs_list],
         "medications": [_med(m) for m in meds],
         "procedures": [_proc(p) for p in procs],
