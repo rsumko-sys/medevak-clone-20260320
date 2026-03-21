@@ -20,6 +20,7 @@ import app.models.documents  # noqa: F401
 import app.models.evacuation  # noqa: F401
 import app.models.events  # noqa: F401
 import app.models.field_drop  # noqa: F401
+import app.models.form100  # noqa: F401
 import app.models.idempotency  # noqa: F401
 import app.models.injuries  # noqa: F401
 import app.models.medications  # noqa: F401

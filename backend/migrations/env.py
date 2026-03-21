@@ -26,6 +26,7 @@ import app.models.vitals  # noqa: F401
 import app.models.evacuation  # noqa: F401
 import app.models.events  # noqa: F401
 import app.models.field_drop  # noqa: F401
+import app.models.form100  # noqa: F401
 
 config = context.config
 

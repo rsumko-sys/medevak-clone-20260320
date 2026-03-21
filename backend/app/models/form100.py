@@ -26,6 +26,18 @@ class Form100Record(Base):
     commander_notified = Column(Boolean, default=False)
     notes = Column(Text, nullable=True)
 
+    # Official full-structure sections (JSON payloads serialized as text).
+    stub_json = Column(Text, nullable=True)
+    front_side_identity_json = Column(Text, nullable=True)
+    front_side_injury_json = Column(Text, nullable=True)
+    front_side_treatment_json = Column(Text, nullable=True)
+    front_side_evacuation_json = Column(Text, nullable=True)
+    front_side_triage_markers_json = Column(Text, nullable=True)
+    front_side_body_diagram_json = Column(Text, nullable=True)
+    back_side_stage_log_json = Column(Text, nullable=True)
+    back_side_signature_json = Column(Text, nullable=True)
+    meta_legal_rules_json = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     voided = Column(Boolean, default=False)
