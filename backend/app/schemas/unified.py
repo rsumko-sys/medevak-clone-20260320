@@ -177,6 +177,47 @@ class EvacuationResponse(EvacuationCreate):
         from_attributes = True
 
 
+# ── FORM 100 ─────────────────────────────────────────────────────────────
+class Form100Create(BaseModel):
+    # Mandatory fields
+    document_number: str = Field(..., min_length=1, max_length=STR_SHORT)
+    injury_datetime: datetime
+    injury_location: str = Field(..., min_length=1, max_length=500)
+    injury_mechanism: str = Field(..., min_length=1, max_length=500)
+    diagnosis_summary: str = Field(..., min_length=1, max_length=STR_LONG)
+    documented_by: str = Field(..., min_length=1, max_length=STR_SHORT)
+
+    # Optional fields
+    treatment_summary: Optional[str] = Field(default=None, max_length=STR_LONG)
+    evacuation_recommendation: Optional[str] = Field(default=None, max_length=STR_LONG)
+    commander_notified: Optional[bool] = False
+    notes: Optional[str] = Field(default=None, max_length=STR_LONG)
+
+
+class Form100Update(BaseModel):
+    document_number: Optional[str] = Field(default=None, min_length=1, max_length=STR_SHORT)
+    injury_datetime: Optional[datetime] = None
+    injury_location: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    injury_mechanism: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    diagnosis_summary: Optional[str] = Field(default=None, min_length=1, max_length=STR_LONG)
+    documented_by: Optional[str] = Field(default=None, min_length=1, max_length=STR_SHORT)
+    treatment_summary: Optional[str] = Field(default=None, max_length=STR_LONG)
+    evacuation_recommendation: Optional[str] = Field(default=None, max_length=STR_LONG)
+    commander_notified: Optional[bool] = None
+    notes: Optional[str] = Field(default=None, max_length=STR_LONG)
+
+
+class Form100Response(Form100Create):
+    id: str
+    case_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    voided: bool
+
+    class Config:
+        from_attributes = True
+
+
 # ── CASES ────────────────────────────────────────────────────────────────
 class CaseCreate(BaseModel):
     case_number: Optional[str] = Field(default=None, max_length=STR_SHORT)
@@ -278,5 +319,6 @@ class CaseDetailResponse(CaseResponse):
     sub_medications: List[MedicationResponse] = []
     observations: List[VitalsResponse] = []  # Vitals
     march_assessments: List[MarchResponse] = []
+    form100: Optional[Form100Response] = None
     evacuation: Optional[EvacuationResponse] = None
     events: List[EventResponse] = []

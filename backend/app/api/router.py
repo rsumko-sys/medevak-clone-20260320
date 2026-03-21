@@ -24,6 +24,7 @@ from app.api.v1 import (
     storage,
     settings,
     field_drop,
+    form100,
 )
 
 api_router = APIRouter()
@@ -50,3 +51,4 @@ api_router.include_router(personnel.router)
 api_router.include_router(storage.router)
 api_router.include_router(settings.router)
 api_router.include_router(field_drop.router)
+api_router.include_router(form100.router)

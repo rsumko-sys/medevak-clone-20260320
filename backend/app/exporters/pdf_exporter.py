@@ -30,6 +30,22 @@ def export_case_to_pdf(case: dict[str, Any]) -> bytes:
     story.append(Paragraph(f"<b>Notes:</b> {case.get('notes', '—')}", styles["Normal"]))
     story.append(Spacer(1, 0.5 * cm))
 
+    form_100 = case.get("form_100") or {}
+    if form_100.get("id"):
+        story.append(Paragraph("Form 100 (Official Injury Record)", styles["Heading2"]))
+        form_data = [
+            ["Document #", str(form_100.get("document_number") or "—")],
+            ["Injury Datetime", str(form_100.get("injury_datetime") or "—")],
+            ["Injury Location", str(form_100.get("injury_location") or "—")],
+            ["Injury Mechanism", str(form_100.get("injury_mechanism") or "—")],
+            ["Diagnosis", str(form_100.get("diagnosis_summary") or "—")],
+            ["Documented By", str(form_100.get("documented_by") or "—")],
+        ]
+        t = Table(form_data, colWidths=[4 * cm, 11 * cm])
+        t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.5, "#ccc")]))
+        story.append(t)
+        story.append(Spacer(1, 0.3 * cm))
+
     march_notes = case.get("march_notes") or {}
     march_rows = [
         ["M", str(march_notes.get("m_notes") or "—")],

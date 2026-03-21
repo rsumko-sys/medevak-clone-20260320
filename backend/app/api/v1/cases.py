@@ -25,6 +25,7 @@ from app.models.procedures import Procedure
 from app.models.medications import MedicationAdministration
 from app.models.vitals import VitalsObservation
 from app.models.march import MarchAssessment
+from app.models.form100 import Form100Record
 from app.models.evacuation import EvacuationRecord
 from app.models.events import Event
 
@@ -142,6 +143,11 @@ async def get_case(
     medications = (await session.execute(get_stmt(MedicationAdministration))).scalars().all()
     vitals = (await session.execute(get_stmt(VitalsObservation).order_by(VitalsObservation.measured_at.desc()))).scalars().all()
     march = (await session.execute(get_stmt(MarchAssessment).order_by(MarchAssessment.assessed_at.desc()))).scalars().all()
+    form100 = (
+        await session.execute(
+            get_stmt(Form100Record).order_by(Form100Record.created_at.desc())
+        )
+    ).scalars().first()
     evac = (await session.execute(get_stmt(EvacuationRecord))).scalars().first()
     events = (await session.execute(get_stmt(Event).order_by(Event.event_time.desc()))).scalars().all()
 
@@ -151,6 +157,7 @@ async def get_case(
     detail.sub_medications = medications
     detail.observations = vitals
     detail.march_assessments = march
+    detail.form100 = form100
     detail.evacuation = evac
     detail.events = events
 

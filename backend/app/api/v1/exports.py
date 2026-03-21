@@ -12,6 +12,7 @@ from app.exporters.fhir_exporter import export_case_to_fhir
 from app.exporters.pdf_exporter import export_case_to_pdf
 from app.exporters.qr_exporter import export_case_to_qr
 from app.models.cases import Case
+from app.models.form100 import Form100Record
 from app.models.march import MarchAssessment
 from app.models.medications import MedicationAdministration as CaseMedicationAdministration
 from app.models.vitals import VitalsObservation as CaseObservation
@@ -42,6 +43,13 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
         .limit(1)
     )
     latest_march = (await session.execute(march_stmt)).scalars().first()
+    form_stmt = (
+        select(Form100Record)
+        .where(Form100Record.case_id == case_id, Form100Record.voided == False)
+        .order_by(Form100Record.created_at.desc())
+        .limit(1)
+    )
+    latest_form100 = (await session.execute(form_stmt)).scalars().first()
 
     def _obs(o):
         return {"id": str(o.id), "case_id": str(o.case_id), "observation_type": o.observation_type, "value": o.value}
@@ -69,6 +77,19 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
             "r_notes": getattr(latest_march, "r_notes", None),
             "c_notes": getattr(latest_march, "c_notes", None),
             "h_notes": getattr(latest_march, "h_notes", None),
+        },
+        "form_100": {
+            "id": getattr(latest_form100, "id", None),
+            "document_number": getattr(latest_form100, "document_number", None),
+            "injury_datetime": latest_form100.injury_datetime.isoformat() if getattr(latest_form100, "injury_datetime", None) else None,
+            "injury_location": getattr(latest_form100, "injury_location", None),
+            "injury_mechanism": getattr(latest_form100, "injury_mechanism", None),
+            "diagnosis_summary": getattr(latest_form100, "diagnosis_summary", None),
+            "documented_by": getattr(latest_form100, "documented_by", None),
+            "treatment_summary": getattr(latest_form100, "treatment_summary", None),
+            "evacuation_recommendation": getattr(latest_form100, "evacuation_recommendation", None),
+            "commander_notified": getattr(latest_form100, "commander_notified", None),
+            "notes": getattr(latest_form100, "notes", None),
         },
         "observations": [_obs(o) for o in obs_list],
         "medications": [_med(m) for m in meds],

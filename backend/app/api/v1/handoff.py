@@ -12,6 +12,7 @@ from app.api.deps import get_current_user, get_request_id, get_session
 from app.core.utils import envelope
 from app.models.cases import Case
 from app.models.evacuation import EvacuationRecord as CaseHandoff
+from app.models.form100 import Form100Record
 from app.models.march import MarchAssessment
 from app.models.medications import MedicationAdministration as CaseMedicationAdministration
 
@@ -37,6 +38,7 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     treatment: dict = {
         "medications": [],
         "procedures": [],
+        "form100": None,
         "march_notes": {
             "m_notes": None,
             "a_notes": None,
@@ -129,6 +131,29 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     except Exception as e:
         logger.exception("MIST MARCH notes aggregation failed for case %s: %s", case_id, e)
         warnings.append("failed to load march notes")
+
+    # Official injury artifact (Form 100)
+    try:
+        form_stmt = (
+            select(Form100Record)
+            .where(Form100Record.case_id == case_id, Form100Record.voided == False)
+            .order_by(Form100Record.created_at.desc())
+            .limit(1)
+        )
+        form = (await session.execute(form_stmt)).scalars().first()
+        if form:
+            treatment["form100"] = {
+                "id": form.id,
+                "document_number": form.document_number,
+                "injury_datetime": form.injury_datetime.isoformat() if form.injury_datetime else None,
+                "injury_location": form.injury_location,
+                "injury_mechanism": form.injury_mechanism,
+                "diagnosis_summary": form.diagnosis_summary,
+                "documented_by": form.documented_by,
+            }
+    except Exception as e:
+        logger.exception("Form 100 aggregation failed for case %s: %s", case_id, e)
+        warnings.append("failed to load form100")
 
     mist = {"mechanism": mechanism, "injuries": injuries, "signs": signs, "treatment": treatment}
     return mist, warnings
