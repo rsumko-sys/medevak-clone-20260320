@@ -63,6 +63,7 @@ export default function BattlefieldPage() {
   const [quickMedications, setQuickMedications] = useState<string[]>([])
   const [quickProcedures, setQuickProcedures] = useState<string[]>([])
   const [pendingVoiceEvents, setPendingVoiceEvents] = useState<string[]>([])
+  const [isMarkerSaving, setIsMarkerSaving] = useState(false)
 
   const tabIds = TABS.map((t) => t.id)
   const currentTabIndex = tabIds.indexOf(activeTab)
@@ -161,7 +162,8 @@ export default function BattlefieldPage() {
   }
 
   const saveMarker = () => {
-    if (!selectedZoneId) return
+    if (!selectedZoneId || isMarkerSaving) return
+    setIsMarkerSaving(true)
     const newInjury: InjuryRecord = {
       id: Math.random().toString(36).substr(2, 9),
       body_region: selectedZoneId,
@@ -170,8 +172,10 @@ export default function BattlefieldPage() {
       view: activeView,
       penetrating: false
     }
-    setInjuries([...injuries, newInjury])
+    setInjuries((prev) => [...prev, newInjury])
     setSelectedZoneId(null)
+    toast.success('Маркер збережено')
+    window.setTimeout(() => setIsMarkerSaving(false), 250)
   }
 
   const handleAddAction = (type: 'medication' | 'procedure', code: string) => {
@@ -661,8 +665,12 @@ export default function BattlefieldPage() {
                              </div>
                            </div>
 
-                           <button onClick={saveMarker} className="w-full py-4 mt-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs tracking-widest uppercase rounded shadow-[0_0_15px_rgba(220,38,38,0.4)]">
-                             ОК - ЗБЕРЕГТИ МАРКЕР
+                           <button
+                             onClick={saveMarker}
+                             disabled={isMarkerSaving}
+                             className="w-full py-4 mt-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs tracking-widest uppercase rounded shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                           >
+                             {isMarkerSaving ? 'ЗБЕРЕЖЕННЯ...' : 'ОК - ЗБЕРЕГТИ МАРКЕР'}
                            </button>
                         </div>
                      </div>
