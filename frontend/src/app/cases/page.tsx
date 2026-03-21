@@ -1,19 +1,58 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { listCases, getCase } from '@/lib/api'
 import { CaseDetails, CaseItem } from '@/lib/types'
 
+type CaseSortKey = 'newest' | 'oldest' | 'triage' | 'callsign'
+
+function getInitialFilters() {
+  if (typeof window === 'undefined') {
+    return {
+      caseId: null as string | null,
+      search: '',
+      triage: 'all',
+      status: 'all',
+      unit: 'all',
+      sort: 'newest' as CaseSortKey,
+    }
+  }
+
+  const q = new URLSearchParams(window.location.search)
+  const sort = (q.get('sort') as CaseSortKey) || 'newest'
+  return {
+    caseId: q.get('id'),
+    search: q.get('search') || '',
+    triage: q.get('triage') || 'all',
+    status: q.get('status') || 'all',
+    unit: q.get('unit') || 'all',
+    sort,
+  }
+}
+
 export default function CasesPage() {
+  const initial = getInitialFilters()
   const [cases, setCases] = useState<CaseItem[]>([])
   const [selectedCase, setSelectedCase] = useState<CaseDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filterTriage, setFilterTriage] = useState('all')
+  const [search, setSearch] = useState(initial.search)
+  const [filterTriage, setFilterTriage] = useState(initial.triage)
+  const [filterStatus, setFilterStatus] = useState(initial.status)
+  const [filterUnit, setFilterUnit] = useState(initial.unit)
+  const [sortBy, setSortBy] = useState<CaseSortKey>(initial.sort)
 
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const caseIdParam = searchParams?.get('id')
+  const updateQuery = (updates: Record<string, string | null>) => {
+    if (typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search)
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value || value === 'all' || value === '') q.delete(key)
+      else q.set(key, value)
+    }
+    const queryString = q.toString()
+    const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }
 
   async function loadCases() {
     try {
@@ -21,7 +60,8 @@ export default function CasesPage() {
       const items = await listCases()
       setCases(items)
       
-      const targetId = caseIdParam || (items.length > 0 ? items[0].id : null)
+      const caseIdFromUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') : null
+      const targetId = caseIdFromUrl || (items.length > 0 ? items[0].id : null)
       if (targetId) {
         const details = await getCase(targetId)
         setSelectedCase(details)
@@ -37,6 +77,7 @@ export default function CasesPage() {
     try {
       const details = await getCase(caseId)
       setSelectedCase(details)
+      updateQuery({ id: caseId })
     } catch (e) {
       console.error('Failed to load case details:', e)
     }
@@ -46,16 +87,68 @@ export default function CasesPage() {
     loadCases()
   }, [])
 
-  const filteredCases = cases.filter(c => {
-    const matchesSearch = !search || 
-      c.callsign?.toLowerCase().includes(search.toLowerCase()) ||
-      c.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      c.unit?.toLowerCase().includes(search.toLowerCase())
-    
-    const matchesTriage = filterTriage === 'all' || c.triage_code === filterTriage
-    
-    return matchesSearch && matchesTriage
-  })
+  useEffect(() => {
+    updateQuery({
+      search,
+      triage: filterTriage,
+      status: filterStatus,
+      unit: filterUnit,
+      sort: sortBy,
+    })
+  }, [search, filterTriage, filterStatus, filterUnit, sortBy])
+
+  const unitOptions = useMemo(() => {
+    const units = new Set<string>()
+    for (const caseItem of cases) {
+      const value = (caseItem.unit || '').trim()
+      if (value) units.add(value)
+    }
+    return Array.from(units).sort((a, b) => a.localeCompare(b, 'uk'))
+  }, [cases])
+
+  const triageSortOrder: Record<string, number> = {
+    IMMEDIATE: 0,
+    DELAYED: 1,
+    MINIMAL: 2,
+    EXPECTANT: 3,
+    DECEASED: 4,
+  }
+
+  const filteredCases = useMemo(() => {
+    const filtered = cases.filter(c => {
+      const q = search.trim().toLowerCase()
+      const matchesSearch = !q ||
+        c.callsign?.toLowerCase().includes(q) ||
+        c.full_name?.toLowerCase().includes(q) ||
+        c.unit?.toLowerCase().includes(q) ||
+        c.case_number?.toLowerCase().includes(q)
+
+      const matchesTriage = filterTriage === 'all' || c.triage_code === filterTriage
+      const matchesStatus = filterStatus === 'all' || c.case_status === filterStatus
+      const matchesUnit = filterUnit === 'all' || (c.unit || '') === filterUnit
+
+      return matchesSearch && matchesTriage && matchesStatus && matchesUnit
+    })
+
+    return filtered.sort((a, b) => {
+      if (sortBy === 'callsign') {
+        const aKey = (a.callsign || a.full_name || '').toLowerCase()
+        const bKey = (b.callsign || b.full_name || '').toLowerCase()
+        return aKey.localeCompare(bKey, 'uk')
+      }
+
+      if (sortBy === 'triage') {
+        const rankA = triageSortOrder[a.triage_code || ''] ?? 99
+        const rankB = triageSortOrder[b.triage_code || ''] ?? 99
+        if (rankA !== rankB) return rankA - rankB
+      }
+
+      const aTime = a.injury_datetime ? new Date(a.injury_datetime).getTime() : 0
+      const bTime = b.injury_datetime ? new Date(b.injury_datetime).getTime() : 0
+      if (sortBy === 'oldest') return aTime - bTime
+      return bTime - aTime
+    })
+  }, [cases, search, filterTriage, filterStatus, filterUnit, sortBy])
 
   const triageColors: Record<string, string> = {
     'IMMEDIATE': 'bg-red-900 text-red-400',
@@ -68,12 +161,12 @@ export default function CasesPage() {
   return (
     <div className="flex-1 flex flex-col">
       <header className="border-b border-[#262a30] bg-[#101317]">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="wolf-h1">МЕДИЧНІ КЕЙСИ</h1>
             <p className="wolf-title">управління пацієнтами та протоколами</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto">
             <Link href="/ai-triage" className="wolf-btn">AI ТРІАЖ</Link>
             <Link href="/exports" className="wolf-btn">ЕКСПОРТ</Link>
             <Link href="/audit" className="wolf-btn">АУДИТ</Link>
@@ -81,7 +174,7 @@ export default function CasesPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto"><div className="max-w-7xl mx-auto px-4 py-6">
+      <main className="flex-1 overflow-y-auto"><div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Left sidebar - cases list */}
           <div className="lg:col-span-1">
@@ -106,11 +199,45 @@ export default function CasesPage() {
                 <option value="EXPECTANT">400 Очікують</option>
                 <option value="DECEASED">200 Померлі</option>
               </select>
+              <select
+                className="wolf-input w-full mt-3"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">Всі case status</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="STABILIZING">STABILIZING</option>
+                <option value="AWAITING_EVAC">AWAITING_EVAC</option>
+                <option value="IN_TRANSPORT">IN_TRANSPORT</option>
+                <option value="HANDED_OFF">HANDED_OFF</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="DECEASED">DECEASED</option>
+              </select>
+              <select
+                className="wolf-input w-full mt-3"
+                value={filterUnit}
+                onChange={(e) => setFilterUnit(e.target.value)}
+              >
+                <option value="all">Всі підрозділи</option>
+                {unitOptions.map((unit) => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+              <select
+                className="wolf-input w-full mt-3"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as CaseSortKey)}
+              >
+                <option value="newest">Сортування: найновіші</option>
+                <option value="oldest">Сортування: найстаріші</option>
+                <option value="triage">Сортування: triage пріоритет</option>
+                <option value="callsign">Сортування: позивний A-Z</option>
+              </select>
             </div>
 
             <div className="wolf-panel p-4 mt-4">
               <div className="wolf-title mb-3">кейси ({filteredCases.length})</div>
-              <div className="space-y-2 max-h-96 overflow-auto">
+              <div className="space-y-2 max-h-80 md:max-h-96 overflow-auto">
                 {loading ? (
                   <div className="text-sm text-gray-400">Завантаження...</div>
                 ) : filteredCases.length === 0 ? (
@@ -124,8 +251,8 @@ export default function CasesPage() {
                         selectedCase?.id === caseItem.id ? 'border-red-500' : ''
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm truncate">
                           {caseItem.callsign || caseItem.full_name || caseItem.id.slice(0, 8)}
                         </span>
                         {caseItem.triage_code && (
