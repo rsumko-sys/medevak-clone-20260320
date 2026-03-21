@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { TriageCategory } from '@/lib/types'
+import React, { useState } from 'react'
 
 interface MarchFormProps {
   data: any
@@ -9,6 +8,14 @@ interface MarchFormProps {
 }
 
 export default function MarchForm({ data, onChange }: MarchFormProps) {
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({
+    m: false,
+    a: false,
+    r: false,
+    c: false,
+    h: false,
+  })
+
   const updateField = (field: string, value: any) => {
     onChange({ ...data, [field]: value })
   }
@@ -17,11 +24,26 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
     updateField(field, !data[field])
   }
 
+  const toggleNotes = (block: 'm' | 'a' | 'r' | 'c' | 'h') => {
+    setExpandedNotes((prev) => ({ ...prev, [block]: !prev[block] }))
+  }
+
+  const hasNote = (field: string) => Boolean((data?.[field] || '').trim())
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Massive Bleeding */}
       <section className="wolf-panel p-5 border border-[#262a30] bg-[#14171b] rounded-md">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-red-500 font-bold mb-4">M - МАСИВНА КРОВОТЕЧА</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-[10px] uppercase tracking-[0.2em] text-red-500 font-bold">M - МАСИВНА КРОВОТЕЧА</h2>
+          <button
+            type="button"
+            onClick={() => toggleNotes('m')}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 border border-[#2a2f3a] rounded text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            {expandedNotes.m ? 'СХОВАТИ НОТАТКУ' : hasNote('m_notes') ? 'НОТАТКА ✓' : 'ДОДАТИ НОТАТКУ'}
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button 
             onClick={() => toggleField('m_massive_bleeding')}
@@ -39,11 +61,32 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
              />
           </div>
         </div>
+        {expandedNotes.m && (
+          <div className="mt-4">
+            <textarea
+              value={data.m_notes || ''}
+              onChange={(e) => updateField('m_notes', e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder="Коротка примітка по M (опційно)"
+              className="w-full bg-[#181b21] border border-[#262a30] rounded p-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-red-500"
+            />
+          </div>
+        )}
       </section>
 
       {/* Airway */}
       <section className="wolf-panel p-5 border border-[#262a30] bg-[#14171b] rounded-md">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">A - ДИХАЛЬНІ ШЛЯХИ</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold">A - ДИХАЛЬНІ ШЛЯХИ</h2>
+          <button
+            type="button"
+            onClick={() => toggleNotes('a')}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 border border-[#2a2f3a] rounded text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            {expandedNotes.a ? 'СХОВАТИ НОТАТКУ' : hasNote('a_notes') ? 'НОТАТКА ✓' : 'ДОДАТИ НОТАТКУ'}
+          </button>
+        </div>
         <div className="space-y-4">
           <div className="flex gap-2">
             {['INTACT', 'NPA', 'SGA', 'CRIC'].map(opt => (
@@ -63,11 +106,32 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
             ПРОХІДНІСТЬ: {data.a_airway_open ? 'НОРМА' : 'ПОРУШЕНО'}
           </button>
         </div>
+        {expandedNotes.a && (
+          <div className="mt-4">
+            <textarea
+              value={data.a_notes || ''}
+              onChange={(e) => updateField('a_notes', e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder="Коротка примітка по A (опційно)"
+              className="w-full bg-[#181b21] border border-[#262a30] rounded p-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        )}
       </section>
 
       {/* Respiration */}
       <section className="wolf-panel p-5 border border-[#262a30] bg-[#14171b] rounded-md">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold mb-4">R - ДИХАННЯ</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-bold">R - ДИХАННЯ</h2>
+          <button
+            type="button"
+            onClick={() => toggleNotes('r')}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 border border-[#2a2f3a] rounded text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            {expandedNotes.r ? 'СХОВАТИ НОТАТКУ' : hasNote('r_notes') ? 'НОТАТКА ✓' : 'ДОДАТИ НОТАТКУ'}
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-2">
            {[
              {id: 'r_chest_seal_applied', l: 'Оклюз. наклейка'},
@@ -83,11 +147,32 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
              </button>
            ))}
         </div>
+        {expandedNotes.r && (
+          <div className="mt-4">
+            <textarea
+              value={data.r_notes || ''}
+              onChange={(e) => updateField('r_notes', e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder="Коротка примітка по R (опційно)"
+              className="w-full bg-[#181b21] border border-[#262a30] rounded p-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+        )}
       </section>
 
       {/* Circulation */}
       <section className="wolf-panel p-5 border border-[#262a30] bg-[#14171b] rounded-md">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-orange-400 font-bold mb-4">C - КРОВООБІГ</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-[10px] uppercase tracking-[0.2em] text-orange-400 font-bold">C - КРОВООБІГ</h2>
+          <button
+            type="button"
+            onClick={() => toggleNotes('c')}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 border border-[#2a2f3a] rounded text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            {expandedNotes.c ? 'СХОВАТИ НОТАТКУ' : hasNote('c_notes') ? 'НОТАТКА ✓' : 'ДОДАТИ НОТАТКУ'}
+          </button>
+        </div>
         <div className="space-y-4">
            <div className="flex gap-2">
             {['Відсутній', 'Слабкий', 'Радіальний'].map(p => (
@@ -115,11 +200,32 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
               </button>
            </div>
         </div>
+        {expandedNotes.c && (
+          <div className="mt-4">
+            <textarea
+              value={data.c_notes || ''}
+              onChange={(e) => updateField('c_notes', e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder="Коротка примітка по C (опційно)"
+              className="w-full bg-[#181b21] border border-[#262a30] rounded p-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-orange-500"
+            />
+          </div>
+        )}
       </section>
 
       {/* Hypothermia */}
       <section className="wolf-panel p-5 border border-[#262a30] bg-[#14171b] rounded-md">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-yellow-500 font-bold mb-4">H - ГІПОТЕРМІЯ / ГОЛОВА</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-[10px] uppercase tracking-[0.2em] text-yellow-500 font-bold">H - ГІПОТЕРМІЯ / ГОЛОВА</h2>
+          <button
+            type="button"
+            onClick={() => toggleNotes('h')}
+            className="text-[9px] uppercase tracking-widest px-2 py-1 border border-[#2a2f3a] rounded text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+          >
+            {expandedNotes.h ? 'СХОВАТИ НОТАТКУ' : hasNote('h_notes') ? 'НОТАТКА ✓' : 'ДОДАТИ НОТАТКУ'}
+          </button>
+        </div>
         <div className="flex gap-2">
           <button 
             onClick={() => toggleField('h_hypothermia_prevented')}
@@ -134,6 +240,18 @@ export default function MarchForm({ data, onChange }: MarchFormProps) {
             АКТИВНЕ ЗІГРІВАННЯ
           </button>
         </div>
+        {expandedNotes.h && (
+          <div className="mt-4">
+            <textarea
+              value={data.h_notes || ''}
+              onChange={(e) => updateField('h_notes', e.target.value)}
+              rows={2}
+              maxLength={300}
+              placeholder="Коротка примітка по H (опційно)"
+              className="w-full bg-[#181b21] border border-[#262a30] rounded p-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500"
+            />
+          </div>
+        )}
       </section>
     </div>
   )
