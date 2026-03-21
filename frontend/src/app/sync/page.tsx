@@ -6,18 +6,38 @@ import { getSyncStats, getSyncQueue } from '@/lib/api'
 
 export default function SyncPage() {
   const [stats, setStats] = useState<any>(null)
+  const [queue, setQueue] = useState<any[]>([])
   const [online, setOnline] = useState(true)
   const [syncing, setSyncing] = useState(false)
 
-  const pending = stats?.pending || 0
-  const acked = stats?.acked ?? stats?.synced ?? 0
-  const deadLetter = stats?.dead_letter ?? stats?.failed ?? 0
+  const normalizeStatus = (status?: string) => {
+    if (status === 'synced') return 'acked'
+    if (status === 'failed') return 'dead_letter'
+    return status || 'pending'
+  }
+
+  const queueCounts = queue.reduce(
+    (acc, item) => {
+      const key = normalizeStatus(item?.status)
+      if (key === 'pending') acc.pending += 1
+      if (key === 'acked') acc.acked += 1
+      if (key === 'dead_letter') acc.dead_letter += 1
+      return acc
+    },
+    { pending: 0, acked: 0, dead_letter: 0 }
+  )
+
+  const pending = queue.length > 0 ? queueCounts.pending : (stats?.pending || 0)
+  const acked = queue.length > 0 ? queueCounts.acked : (stats?.acked ?? stats?.synced ?? 0)
+  const deadLetter = queue.length > 0 ? queueCounts.dead_letter : (stats?.dead_letter ?? stats?.failed ?? 0)
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await getSyncStats()
-        setStats(data)
+        const [statsData, queueData] = await Promise.all([getSyncStats(), getSyncQueue()])
+        setStats(statsData)
+        setQueue(Array.isArray(queueData) ? queueData : [])
+        setOnline(true)
       } catch (e) {
         setOnline(false)
       }
@@ -79,11 +99,23 @@ export default function SyncPage() {
             <Server className="w-4 h-4 text-blue-500" /> РЕПЛІКАЦІЙНИЙ ЖУРНАЛ
           </h3>
           <button 
-            onClick={async () => { setSyncing(true); try { await getSyncQueue(); const data = await getSyncStats(); setStats(data) } catch {} finally { setSyncing(false) } }}
+            onClick={async () => {
+              setSyncing(true)
+              try {
+                const [statsData, queueData] = await Promise.all([getSyncStats(), getSyncQueue()])
+                setStats(statsData)
+                setQueue(Array.isArray(queueData) ? queueData : [])
+              } catch {}
+              finally { setSyncing(false) }
+            }}
             disabled={syncing}
             className="text-[10px] tracking-widest uppercase font-bold text-blue-400 hover:text-white transition-colors disabled:opacity-50">
             {syncing ? 'СИНХРОНІЗАЦІЯ...' : 'ПРИМУСОВА РЕПЛІКАЦІЯ'}
           </button>
+        </div>
+
+        <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-4">
+          Статуси відображаються як: pending / acked / dead_letter
         </div>
         
         <div className="border border-dashed border-[#262a30] rounded-md p-10 flex flex-col items-center justify-center text-center bg-[#0f1217]">
