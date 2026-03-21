@@ -162,13 +162,21 @@ export interface FieldNeed {
   qty: number
 }
 
+export type FieldRequestStatus =
+  | 'DRAFT'
+  | 'RECOMMENDED'
+  | 'DISPATCHED'
+  | 'PARTIAL'
+  | 'FAILED'
+  | 'COMPLETED'
+
 export interface FieldRequest {
   id: string
   x: number
   y: number
   urgency: string
   radius_km: number
-  status: string
+  status: FieldRequestStatus
   created_at: string
   required: FieldNeed[]
 }
@@ -181,7 +189,7 @@ export interface FieldRecommendationRow {
   distance_km?: number | null
   score?: number | null
   eta_min?: number | null
-  status: string
+  status: 'RECOMMENDED' | 'NOT_ENOUGH'
 }
 
 export interface FieldRecommendation {
@@ -192,11 +200,35 @@ export interface FieldRecommendation {
   actions: FieldRecommendationRow[]
 }
 
-export interface FieldCommit {
-  ok: boolean
-  applied: FieldRecommendationRow[]
-  messages: string[]
+export interface FieldAppliedRow {
+  position_id?: string | null
+  position?: string | null
+  item_name: string
+  qty: number
+  distance_km?: number | null
+  eta_min?: number | null
+  status: 'APPLIED' | 'SKIPPED' | 'FAILED'
 }
+
+export interface FieldShortage {
+  item_name: string
+  missing_qty: number
+}
+
+export interface FieldCommit {
+  request_id: string
+  ok: boolean
+  already_committed: boolean
+  request_status: FieldRequestStatus
+  committed_at?: string | null
+  applied: FieldAppliedRow[]
+  shortages: FieldShortage[]
+  messages: string[]
+  logs_created?: number
+  log_ids?: string[]
+}
+
+export type FieldDispatchLogStatus = 'APPLIED' | 'SKIPPED' | 'FAILED' | 'CREATED'
 
 export interface FieldDispatchLog {
   id: string
@@ -207,6 +239,8 @@ export interface FieldDispatchLog {
   qty: number
   distance_km?: number | null
   eta_min?: number | null
-  status: string
+  status: FieldDispatchLogStatus
+  request_status?: FieldRequestStatus | null
+  dispatched_by?: string | null
   created_at?: string | null
 }

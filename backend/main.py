@@ -3,7 +3,7 @@ import sys
 import ipaddress
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -80,6 +80,8 @@ app.add_middleware(
 # API routes first
 if api_router is not None:
     app.include_router(api_router, prefix="/api")
+    # Backward compatibility for clients still using /api/v1
+    app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/startup-error")

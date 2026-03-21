@@ -12,19 +12,20 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Import Base and ALL models so they are registered with metadata
-from backend.app.core.database import Base
-import backend.app.models.cases  # noqa: F401
-import backend.app.models.audit  # noqa: F401
-import backend.app.models.documents  # noqa: F401
-import backend.app.models.user  # noqa: F401
-import backend.app.models.sync_queue  # noqa: F401
-import backend.app.models.march  # noqa: F401
-import backend.app.models.injuries  # noqa: F401
-import backend.app.models.procedures  # noqa: F401
-import backend.app.models.medications  # noqa: F401
-import backend.app.models.vitals  # noqa: F401
-import backend.app.models.evacuation  # noqa: F401
-import backend.app.models.events  # noqa: F401
+from app.core.database import Base
+import app.models.cases  # noqa: F401
+import app.models.audit  # noqa: F401
+import app.models.documents  # noqa: F401
+import app.models.user  # noqa: F401
+import app.models.sync_queue  # noqa: F401
+import app.models.march  # noqa: F401
+import app.models.injuries  # noqa: F401
+import app.models.procedures  # noqa: F401
+import app.models.medications  # noqa: F401
+import app.models.vitals  # noqa: F401
+import app.models.evacuation  # noqa: F401
+import app.models.events  # noqa: F401
+import app.models.field_drop  # noqa: F401
 
 config = context.config
 
@@ -35,14 +36,19 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    """Get database URL. Use sync driver for Alembic."""
-    import os
-    url = os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url", "sqlite:///./medevak.db")
-    # Strip async drivers for Alembic (sync only)
+    """Derive DB URL from app config — same source as the runtime app, always."""
+    from app.core.config import DATABASE_URL
+    url = DATABASE_URL
+    # Strip async drivers — Alembic requires sync connections
     url = url.replace("sqlite+aiosqlite", "sqlite")
-    url = url.replace("postgresql+asyncpg", "postgresql")
-    url = url.replace("postgres://", "postgresql://")
+    url = url.replace("postgresql+asyncpg", "postgresql+psycopg2")
+    # Remove ?ssl=require — passed via connect_args instead
+    url = url.replace("?ssl=require", "").replace("&ssl=require", "")
     return url
+
+
+def _is_postgres_url(url: str) -> bool:
+    return url.startswith("postgresql") or url.startswith("postgres")
 
 
 def run_migrations_offline() -> None:
@@ -70,7 +76,8 @@ def do_run_migrations(connection: Connection) -> None:
         compare_server_default=True,
         render_as_batch=True
     )
-    context.run_migrations()
+    with context.begin_transaction():
+        context.run_migrations()
 
 
 from typing import Dict, Any
@@ -84,9 +91,12 @@ def run_migrations_online() -> None:
 
     if connectable is None:
         from sqlalchemy import create_engine
+        url = get_url()
+        connect_args = {"sslmode": "require"} if _is_postgres_url(url) else {}
         connectable = create_engine(
-            get_url(),
+            url,
             poolclass=pool.NullPool,
+            connect_args=connect_args,
         )
 
     with connectable.connect() as connection:

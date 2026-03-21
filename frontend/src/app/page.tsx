@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Zap, Monitor, Mic, Map, Grid, Shield, Users, Box, Droplet, RefreshCw, Radio } from 'lucide-react'
+import ServiceStatus from '@/components/ServiceStatus'
 
 export default function HomePage() {
   return (
@@ -31,7 +32,7 @@ export default function HomePage() {
         <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-red-900/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-red-500/30" />
           
-          <div className="p-8 flex-1">
+          <div className="p-8 flex-1 flex flex-col">
             <div className="flex items-center gap-4 mb-8">
               <div className="bg-red-900/40 p-3 rounded-sm text-red-500 border border-red-900/50">
                 <Zap className="w-6 h-6" />
@@ -42,7 +43,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <ul className="space-y-4 mb-10">
+            <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
                 <Mic className="w-4 h-4 text-gray-500" /> ГОЛОСОВЕ ВВЕДЕННЯ (WHISPER AI)
               </li>
@@ -57,7 +58,7 @@ export default function HomePage() {
               </li>
             </ul>
 
-            <Link href="/battlefield" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-900/50 text-white font-bold tracking-widest text-sm transition-colors w-48">
+            <Link href="/battlefield" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-900/50 text-white font-bold tracking-widest text-sm transition-colors w-56 mt-auto">
               ВІДКРИТИ →
             </Link>
           </div>
@@ -67,7 +68,7 @@ export default function HomePage() {
         <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-gray-800/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-gray-600/30" />
           
-          <div className="p-8 flex-1">
+          <div className="p-8 flex-1 flex flex-col">
             <div className="flex items-center gap-4 mb-8">
               <div className="bg-[#22252b] p-3 rounded-sm text-gray-400 border border-[#333740]">
                 <Monitor className="w-6 h-6" />
@@ -78,7 +79,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <ul className="space-y-4 mb-10">
+            <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
                 <Users className="w-4 h-4 text-gray-500" /> АРХІВ ТА АКТИВНІ ПАЦІЄНТИ
               </li>
@@ -93,7 +94,7 @@ export default function HomePage() {
               </li>
             </ul>
 
-            <Link href="/command" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#22252b] hover:bg-[#2a2e35] border border-[#333740] text-gray-300 font-bold tracking-widest text-sm transition-colors w-48">
+            <Link href="/command" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#22252b] hover:bg-[#2a2e35] border border-[#333740] text-gray-300 font-bold tracking-widest text-sm transition-colors w-56 mt-auto">
               ВІДКРИТИ →
             </Link>
           </div>
@@ -103,7 +104,7 @@ export default function HomePage() {
         <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-amber-800/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-amber-500/30" />
 
-          <div className="p-8 flex-1">
+          <div className="p-8 flex-1 flex flex-col">
             <div className="flex items-center gap-4 mb-8">
               <div className="bg-amber-900/30 p-3 rounded-sm text-amber-400 border border-amber-700/40">
                 <Radio className="w-6 h-6" />
@@ -114,7 +115,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <ul className="space-y-4 mb-10">
+            <ul className="space-y-4 mb-8">
               <li className="flex items-center gap-3 text-sm text-gray-400 font-medium">
                 <Box className="w-4 h-4 text-gray-500" /> ЛОГІСТИКА В ЄДИНІЙ СИСТЕМІ CCRM
               </li>
@@ -131,7 +132,7 @@ export default function HomePage() {
 
             <Link
               href="/field-drop"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber-900/20 hover:bg-amber-900/35 border border-amber-700/40 text-amber-200 font-bold tracking-widest text-sm transition-colors w-56"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber-900/20 hover:bg-amber-900/35 border border-amber-700/40 text-amber-200 font-bold tracking-widest text-sm transition-colors w-56 mt-auto"
             >
               ВІДКРИТИ СКИД →
             </Link>
@@ -140,8 +141,10 @@ export default function HomePage() {
 
       </div>
 
+      <ServiceStatus />
+
       {/* Footer Status */}
-      <div className="mt-16 flex items-center justify-center gap-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest">
+      <div className="mt-8 flex items-center justify-center gap-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-green-500" />
           СИСТЕМА АКТИВНА

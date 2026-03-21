@@ -56,10 +56,10 @@ async function apiGet<T>(path: string): Promise<T> {
   return json.data
 }
 
-async function apiPost<T>(path: string, body: unknown): Promise<T> {
+async function apiPost<T>(path: string, body: unknown, options?: { headers?: Record<string, string> }): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
     body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -67,10 +67,10 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return json.data
 }
 
-async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+async function apiPatch<T>(path: string, body: unknown, options?: { headers?: Record<string, string> }): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
     body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -215,7 +215,7 @@ export async function createFieldDropPosition(payload: {
     tourniquet: number
     meds?: Record<string, number>
   }
-}) {
+}, idempotencyKey?: string) {
   return apiPost<FieldPosition>('/field-drop/positions', {
     ...payload,
     inventory: {
@@ -224,13 +224,19 @@ export async function createFieldDropPosition(payload: {
       tourniquet: payload.inventory.tourniquet,
       meds: payload.inventory.meds ?? {},
     },
-  })
+  }, idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined)
 }
 
-export async function updateFieldDropInventory(positionId: string, item_name: string, qty: number) {
+export async function updateFieldDropInventory(
+  positionId: string,
+  item_name: string,
+  qty: number,
+  idempotencyKey?: string,
+) {
   return apiPatch<{ position_id: string; item_name: string; qty: number }>(
     `/field-drop/positions/${positionId}/inventory`,
-    { item_name, qty }
+    { item_name, qty },
+    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
   )
 }
 
@@ -244,16 +250,24 @@ export async function createFieldDropRequest(payload: {
   urgency: string
   radius_km: number
   required: FieldNeed[]
-}) {
-  return apiPost<FieldRequest>('/field-drop/requests', payload)
+}, idempotencyKey?: string) {
+  return apiPost<FieldRequest>(
+    '/field-drop/requests',
+    payload,
+    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+  )
 }
 
 export async function getFieldDropRecommendation(requestId: string) {
   return apiGet<FieldRecommendation>(`/field-drop/requests/${requestId}/recommendation`)
 }
 
-export async function commitFieldDropRequest(requestId: string) {
-  return apiPost<FieldCommit>(`/field-drop/requests/${requestId}/commit`, {})
+export async function commitFieldDropRequest(requestId: string, idempotencyKey?: string) {
+  return apiPost<FieldCommit>(
+    `/field-drop/requests/${requestId}/commit`,
+    {},
+    idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
+  )
 }
 
 export async function listFieldDropLogs(limit = 20) {

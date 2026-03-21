@@ -173,13 +173,13 @@ def upgrade() -> None:
     op.drop_table('case_handoffs')
     op.drop_table('medical_records')
     op.drop_table('personnel_records')
+    op.drop_table('personnel_documents')
     with op.batch_alter_table('service_members', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_service_members_service_number'))
         batch_op.drop_index(batch_op.f('ix_service_members_social_security'))
 
     op.drop_table('service_members')
     op.drop_table('case_procedures')
-    op.drop_table('personnel_documents')
     with op.batch_alter_table('audit_log', schema=None) as batch_op:
         batch_op.add_column(sa.Column('old_values', sqlite.JSON(), nullable=True))
         batch_op.add_column(sa.Column('new_values', sqlite.JSON(), nullable=True))

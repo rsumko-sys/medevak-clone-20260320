@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "bash ../scripts/sync_static_html.sh",
+    "prebuild": "node -e \"try{require('child_process').execSync('bash ../scripts/sync_static_html.sh')}catch(e){console.log('Static HTML sync skipped')}\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

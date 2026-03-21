@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "env": {
+    "NEXT_PUBLIC_INTERFACE": "evac"
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/evac"
+    }
+  ]
+}
