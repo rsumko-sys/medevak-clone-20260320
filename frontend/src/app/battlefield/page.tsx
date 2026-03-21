@@ -64,6 +64,7 @@ export default function BattlefieldPage() {
   const [quickProcedures, setQuickProcedures] = useState<string[]>([])
   const [pendingVoiceEvents, setPendingVoiceEvents] = useState<string[]>([])
   const [isMarkerSaving, setIsMarkerSaving] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const tabIds = TABS.map((t) => t.id)
   const currentTabIndex = tabIds.indexOf(activeTab)
@@ -75,8 +76,64 @@ export default function BattlefieldPage() {
     setActiveTab(tabIds[currentTabIndex - 1])
   }
 
+  const validateStep = (stepId: string): { valid: boolean; error: string } => {
+    const nextFieldErrors: Record<string, string> = {}
+    let stepError = ''
+
+    if (stepId === 'S1') {
+      if (!callsign.trim()) {
+        nextFieldErrors.callsign = 'Вкажіть позивний'
+      }
+      if (mechanisms.length === 0) {
+        nextFieldErrors.mechanisms = 'Оберіть хоча б один механізм травми'
+      }
+      if (Object.keys(nextFieldErrors).length > 0) {
+        stepError = 'Заповніть обовʼязкові поля на кроці 1'
+      }
+    }
+
+    if (stepId === 'S2' && injuries.length === 0) {
+      nextFieldErrors.injuries = 'Додайте щонайменше одну травму на карті тіла'
+      stepError = 'Додайте травму перед переходом далі'
+    }
+
+    if (stepId === 'S5' && !evacData.destination?.trim()) {
+      nextFieldErrors.destination = 'Вкажіть пункт призначення'
+      stepError = 'Заповніть пункт призначення'
+    }
+
+    setFieldErrors((prev) => ({ ...prev, ...nextFieldErrors }))
+    return { valid: stepError === '', error: stepError }
+  }
+
+  const goToTab = (tabId: string) => {
+    const targetIndex = tabIds.indexOf(tabId)
+    if (targetIndex === -1) return
+    if (targetIndex <= currentTabIndex) {
+      setActiveTab(tabId)
+      return
+    }
+
+    for (let index = currentTabIndex; index < targetIndex; index += 1) {
+      const gateStep = tabIds[index]
+      const validation = validateStep(gateStep)
+      if (!validation.valid) {
+        setActiveTab(gateStep)
+        toast.error(validation.error || 'Заповніть обовʼязкові поля перед переходом')
+        return
+      }
+    }
+
+    setActiveTab(tabId)
+  }
+
   const goNextTab = () => {
     if (!canGoNext) return
+    const validation = validateStep(activeTab)
+    if (!validation.valid) {
+      toast.error(validation.error || 'Заповніть обовʼязкові поля перед переходом')
+      return
+    }
     setActiveTab(tabIds[currentTabIndex + 1])
   }
 
@@ -458,7 +515,7 @@ export default function BattlefieldPage() {
         {TABS.map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => goToTab(tab.id)}
             className={`px-4 md:px-6 py-4 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[170px] flex-1 ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
           >
             {tab.name}
@@ -476,10 +533,16 @@ export default function BattlefieldPage() {
                   type="text" 
                   placeholder="ПОЗИВНИЙ"
                   value={callsign}
-                  onChange={e => setCallsign(e.target.value)}
+                  onChange={e => {
+                    setCallsign(e.target.value)
+                    if (e.target.value.trim()) {
+                      setFieldErrors((prev) => ({ ...prev, callsign: '' }))
+                    }
+                  }}
                   maxLength={100}
-                  className="w-full bg-transparent border-b-2 border-[#2a2f3a] text-2xl lg:text-3xl text-white placeholder-gray-700 py-3 uppercase focus:outline-none focus:border-red-500 transition-colors tracking-widest"
+                  className={`w-full bg-transparent border-b-2 text-2xl lg:text-3xl text-white placeholder-gray-700 py-3 uppercase focus:outline-none focus:border-red-500 transition-colors tracking-widest ${fieldErrors.callsign ? 'border-red-500' : 'border-[#2a2f3a]'}`}
                 />
+                {fieldErrors.callsign && <p className="text-[10px] font-bold uppercase tracking-widest text-red-400">{fieldErrors.callsign}</p>}
                 <input
                   type="text"
                   placeholder="ПОВНЕ ІМ'Я"
@@ -532,13 +595,17 @@ export default function BattlefieldPage() {
                  ].map(m => (
                    <button
                      key={m.code}
-                     onClick={() => toggleMechanism(m.code as MechanismOfInjury)}
+                     onClick={() => {
+                      toggleMechanism(m.code as MechanismOfInjury)
+                      setFieldErrors((prev) => ({ ...prev, mechanisms: '' }))
+                     }}
                      className={`px-4 py-3 border rounded text-xs font-bold tracking-widest uppercase transition-colors ${mechanisms.includes(m.code as MechanismOfInjury) ? 'bg-[#3b4252] border-[#4c566a] text-white' : 'bg-[#181b21] border-[#262a30] text-gray-500 hover:text-gray-300 hover:bg-[#1f232b]'}`}
                    >
                      {m.label}
                    </button>
                  ))}
                </div>
+               {fieldErrors.mechanisms && <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-red-400">{fieldErrors.mechanisms}</p>}
             </section>
 
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md flex items-center justify-between">
@@ -583,7 +650,7 @@ export default function BattlefieldPage() {
               </div>
             </section>
 
-            <button onClick={() => setActiveTab('S2')} className="w-full py-5 bg-red-900 border border-red-700 hover:bg-red-800 text-white font-bold tracking-[0.2em] rounded transition-colors shadow-lg">
+            <button onClick={() => goToTab('S2')} className="w-full py-5 bg-red-900 border border-red-700 hover:bg-red-800 text-white font-bold tracking-[0.2em] rounded transition-colors shadow-lg">
               ДАЛІ → S2 КАРТА ТІЛА
             </button>
           </div>
@@ -681,6 +748,7 @@ export default function BattlefieldPage() {
                        <span>ЖУРНАЛ ТРАВМ ({activeView === 'front' ? 'ФРОНТ' : 'ТИЛ'})</span>
                        <span className="text-red-500">{injuries.filter(i => i.view === activeView).length} всього</span>
                     </h3>
+                      {fieldErrors.injuries && <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-red-400">{fieldErrors.injuries}</p>}
                     <div className="space-y-3">
                        {injuries.filter(i => i.view === activeView).length === 0 && (
                          <div className="flex flex-col items-center justify-center py-10 text-gray-600 border border-dashed border-[#262a30] rounded">
@@ -727,6 +795,7 @@ export default function BattlefieldPage() {
             data={evacData} 
             mist={mistSummary} 
             onChange={setEvacData} 
+            destinationError={fieldErrors.destination}
             onGenerateMist={handleGenerateMist} 
           />
         )}

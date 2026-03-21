@@ -8,9 +8,10 @@ interface EvacFormProps {
   mist: string
   onChange: (data: any) => void
   onGenerateMist: () => void
+  destinationError?: string
 }
 
-export default function EvacForm({ data, mist, onChange, onGenerateMist }: EvacFormProps) {
+export default function EvacForm({ data, mist, onChange, onGenerateMist, destinationError }: EvacFormProps) {
   const updateField = (field: string, value: any) => {
     onChange({ ...data, [field]: value })
   }
@@ -66,8 +67,9 @@ export default function EvacForm({ data, mist, onChange, onGenerateMist }: EvacF
             placeholder="НАЗВА ГОСПІТАЛЮ / СТАБПУНКTУ"
             value={data.destination || ''}
             onChange={e => updateField('destination', e.target.value)}
-            className="w-full bg-[#181b21] border border-[#262a30] rounded p-4 text-white uppercase font-bold tracking-wider text-xs focus:outline-none focus:border-gray-500 transition-colors"
+            className={`w-full bg-[#181b21] border rounded p-4 text-white uppercase font-bold tracking-wider text-xs focus:outline-none transition-colors ${destinationError ? 'border-red-500 focus:border-red-400' : 'border-[#262a30] focus:border-gray-500'}`}
            />
+           {destinationError && <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-400">{destinationError}</p>}
         </section>
       </div>
 
