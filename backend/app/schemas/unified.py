@@ -178,20 +178,175 @@ class EvacuationResponse(EvacuationCreate):
 
 
 # ── FORM 100 ─────────────────────────────────────────────────────────────
+class Form100Stub(BaseModel):
+    issued_at: Optional[datetime] = None
+    isolation_flag: Optional[bool] = False
+    urgent_care_flag: Optional[bool] = False
+    sanitary_processing_flag: Optional[bool] = False
+
+
+class Form100FrontSideIdentity(BaseModel):
+    rank: Optional[str] = None
+    unit_name: Optional[str] = None
+    full_name: Optional[str] = None
+    identity_document: Optional[str] = None
+    personal_number: Optional[str] = None
+    sex: Optional[str] = None
+
+
+class Form100BodyDiagramMark(BaseModel):
+    wound_mark_type: Optional[str] = None
+    wound_mark_location: Optional[str] = None
+    wound_mark_notes: Optional[str] = None
+
+
+class Form100FrontSideBodyDiagram(BaseModel):
+    body_diagram_marks: List[Form100BodyDiagramMark] = Field(default_factory=list)
+    placeholder_model: Optional[str] = None
+
+
+class Form100FrontSideInjury(BaseModel):
+    injury_or_illness_datetime: Optional[datetime] = None
+    sanitary_loss_type: Optional[str] = None
+    injury_category_codes: List[str] = Field(default_factory=list)
+    tourniquet_applied_at: Optional[datetime] = None
+    diagnosis: Optional[str] = None
+    # Legacy compatibility field preserved for summary payloads.
+    injury_mechanism: Optional[str] = None
+    body_diagram_marks: List[Form100BodyDiagramMark] = Field(default_factory=list)
+
+
+class Form100FrontSideTreatment(BaseModel):
+    antibiotic: Optional[str] = None
+    serum_pps_pgs: Optional[str] = None
+    anatoxin: Optional[str] = None
+    antidote: Optional[str] = None
+    painkiller: Optional[str] = None
+    blood_transfusion: Optional[str] = None
+    blood_substitutes: Optional[str] = None
+    immobilization: Optional[str] = None
+    bandaging: Optional[str] = None
+    sanitary_processing_type: Optional[str] = None
+    treatment_notes: Optional[str] = None
+
+
+class Form100FrontSideEvacuation(BaseModel):
+    evacuation_transport: Optional[str] = None
+    evacuation_destination: Optional[str] = None
+    evacuation_position: Optional[str] = None
+    evacuation_priority: Optional[str] = None
+    recommendation_notes: Optional[str] = None
+
+
+class Form100FrontSideTriageMarkers(BaseModel):
+    red_urgent_care: Optional[bool] = False
+    yellow_sanitary_processing: Optional[bool] = False
+    black_isolation: Optional[bool] = False
+    blue_radiation_measures: Optional[bool] = False
+
+
+class Form100FrontSide(BaseModel):
+    identity: Optional[Form100FrontSideIdentity] = None
+    injury: Optional[Form100FrontSideInjury] = None
+    treatment: Optional[Form100FrontSideTreatment] = None
+    evacuation: Optional[Form100FrontSideEvacuation] = None
+    triage_markers: Optional[Form100FrontSideTriageMarkers] = None
+    body_diagram: Optional[Form100FrontSideBodyDiagram] = None
+
+
+class Form100BackSideStageEntry(BaseModel):
+    arrived_at: Optional[datetime] = None
+    stage_name: Optional[str] = None
+    physician_notes: Optional[str] = None
+    refined_diagnosis: Optional[str] = None
+    self_exited: Optional[bool] = False
+    carried_by: Optional[str] = None
+    care_provided: Optional[str] = None
+    time_after_injury: Optional[str] = None
+    first_aid_provided: Optional[str] = None
+    evacuate_to_when: Optional[str] = None
+    result: Optional[str] = None
+
+
+class Form100BackSideSignature(BaseModel):
+    physician_name: Optional[str] = None
+    physician_signature: Optional[str] = None
+    signed_at: Optional[datetime] = None
+
+
+class Form100BackSide(BaseModel):
+    stage_log: List[Form100BackSideStageEntry] = Field(default_factory=list)
+    signature: Optional[Form100BackSideSignature] = None
+
+
+class Form100MetaLegalRules(BaseModel):
+    legal_status: Optional[str] = None
+    first_eme_completed: Optional[bool] = False
+    continuity_required: Optional[bool] = False
+    commander_notified: Optional[bool] = None
+    additional_notes: Optional[str] = None
+
+
 class Form100Create(BaseModel):
     # Mandatory fields
-    document_number: str = Field(..., min_length=1, max_length=STR_SHORT)
-    injury_datetime: datetime
-    injury_location: str = Field(..., min_length=1, max_length=500)
-    injury_mechanism: str = Field(..., min_length=1, max_length=500)
-    diagnosis_summary: str = Field(..., min_length=1, max_length=STR_LONG)
-    documented_by: str = Field(..., min_length=1, max_length=STR_SHORT)
+    document_number: Optional[str] = Field(default=None, min_length=1, max_length=STR_SHORT)
+    injury_datetime: Optional[datetime] = None
+    injury_location: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    injury_mechanism: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    diagnosis_summary: Optional[str] = Field(default=None, min_length=1, max_length=STR_LONG)
+    documented_by: Optional[str] = Field(default=None, min_length=1, max_length=STR_SHORT)
 
     # Optional fields
     treatment_summary: Optional[str] = Field(default=None, max_length=STR_LONG)
     evacuation_recommendation: Optional[str] = Field(default=None, max_length=STR_LONG)
     commander_notified: Optional[bool] = False
     notes: Optional[str] = Field(default=None, max_length=STR_LONG)
+
+    # Canonical official structure
+    stub: Optional[Form100Stub] = None
+    front_side: Optional[Form100FrontSide] = None
+    back_side: Optional[Form100BackSide] = None
+    meta_legal_rules: Optional[Form100MetaLegalRules] = None
+
+    @model_validator(mode="after")
+    def ensure_legacy_required_fields(self):
+        injury = self.front_side.injury if self.front_side else None
+        if injury:
+            if self.injury_datetime is None and injury.injury_or_illness_datetime is not None:
+                self.injury_datetime = injury.injury_or_illness_datetime
+            if self.diagnosis_summary is None and injury.diagnosis:
+                self.diagnosis_summary = injury.diagnosis
+            if self.injury_mechanism is None and injury.injury_mechanism:
+                self.injury_mechanism = injury.injury_mechanism
+            if self.injury_location is None:
+                first_mark = next((m for m in injury.body_diagram_marks if m.wound_mark_location), None)
+                if first_mark is not None:
+                    self.injury_location = first_mark.wound_mark_location
+
+        treatment = self.front_side.treatment if self.front_side else None
+        if self.treatment_summary is None and treatment and treatment.treatment_notes:
+            self.treatment_summary = treatment.treatment_notes
+
+        evacuation = self.front_side.evacuation if self.front_side else None
+        if self.evacuation_recommendation is None and evacuation and evacuation.recommendation_notes:
+            self.evacuation_recommendation = evacuation.recommendation_notes
+
+        signature = self.back_side.signature if self.back_side else None
+        if self.documented_by is None and signature and signature.physician_name:
+            self.documented_by = signature.physician_name
+
+        required = {
+            "document_number": self.document_number,
+            "injury_datetime": self.injury_datetime,
+            "injury_location": self.injury_location,
+            "injury_mechanism": self.injury_mechanism,
+            "diagnosis_summary": self.diagnosis_summary,
+            "documented_by": self.documented_by,
+        }
+        missing = [field for field, value in required.items() if value in (None, "")]
+        if missing:
+            raise ValueError(f"Missing required Form100 fields: {', '.join(missing)}")
+        return self
 
 
 class Form100Update(BaseModel):
@@ -205,9 +360,29 @@ class Form100Update(BaseModel):
     evacuation_recommendation: Optional[str] = Field(default=None, max_length=STR_LONG)
     commander_notified: Optional[bool] = None
     notes: Optional[str] = Field(default=None, max_length=STR_LONG)
+    stub: Optional[Form100Stub] = None
+    front_side: Optional[Form100FrontSide] = None
+    back_side: Optional[Form100BackSide] = None
+    meta_legal_rules: Optional[Form100MetaLegalRules] = None
 
 
-class Form100Response(Form100Create):
+class Form100Response(BaseModel):
+    document_number: str
+    injury_datetime: datetime
+    injury_location: str
+    injury_mechanism: str
+    diagnosis_summary: str
+    documented_by: str
+    treatment_summary: Optional[str] = None
+    evacuation_recommendation: Optional[str] = None
+    commander_notified: Optional[bool] = False
+    notes: Optional[str] = None
+
+    stub: Optional[Form100Stub] = None
+    front_side: Optional[Form100FrontSide] = None
+    back_side: Optional[Form100BackSide] = None
+    meta_legal_rules: Optional[Form100MetaLegalRules] = None
+
     id: str
     case_id: str
     created_at: datetime

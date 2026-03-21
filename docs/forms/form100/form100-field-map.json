@@ -1,0 +1,109 @@
+{
+  "source_of_truth": "docs/forms/form100/form100-original.docx",
+  "artifact_name": "Form 100 / Первинна медична картка (ПМК)",
+  "sections": {
+    "stub": {
+      "fields": [
+        "issued_at",
+        "isolation_flag",
+        "urgent_care_flag",
+        "sanitary_processing_flag"
+      ]
+    },
+    "front_side_identity": {
+      "fields": [
+        "rank",
+        "unit_name",
+        "full_name",
+        "identity_document",
+        "personal_number",
+        "sex"
+      ]
+    },
+    "front_side_injury": {
+      "fields": [
+        "injury_or_illness_datetime",
+        "sanitary_loss_type",
+        "injury_category_codes",
+        "tourniquet_applied_at",
+        "diagnosis",
+        "body_diagram_marks"
+      ]
+    },
+    "front_side_treatment": {
+      "fields": [
+        "antibiotic",
+        "serum_pps_pgs",
+        "anatoxin",
+        "antidote",
+        "painkiller",
+        "blood_transfusion",
+        "blood_substitutes",
+        "immobilization",
+        "bandaging",
+        "sanitary_processing_type"
+      ]
+    },
+    "front_side_evacuation": {
+      "fields": [
+        "evacuation_transport",
+        "evacuation_destination",
+        "evacuation_position",
+        "evacuation_priority"
+      ]
+    },
+    "front_side_triage_markers": {
+      "fields": [
+        "red_urgent_care",
+        "yellow_sanitary_processing",
+        "black_isolation",
+        "blue_radiation_measures"
+      ]
+    },
+    "front_side_body_diagram": {
+      "fields": [
+        "body_diagram_marks",
+        "wound_mark_type",
+        "wound_mark_location",
+        "wound_mark_notes"
+      ]
+    },
+    "back_side_stage_log": {
+      "repeatable": true,
+      "fields": [
+        "arrived_at",
+        "stage_name",
+        "physician_notes",
+        "refined_diagnosis",
+        "self_exited",
+        "carried_by",
+        "care_provided",
+        "time_after_injury",
+        "first_aid_provided",
+        "evacuate_to_when",
+        "result"
+      ]
+    },
+    "back_side_signature": {
+      "fields": [
+        "physician_name",
+        "physician_signature",
+        "signed_at"
+      ]
+    },
+    "meta_legal_rules": {
+      "fields": [
+        "legal_status",
+        "first_eme_completed",
+        "continuity_required"
+      ]
+    }
+  },
+  "rules": [
+    "Do not reduce official form to simplified summary fields.",
+    "Preserve front side, back side, and stub as separate logical parts.",
+    "Preserve all coded markers and evacuation semantics.",
+    "Preserve legal meaning and continuity across EME stages.",
+    "Support repeatable back-side stage entries."
+  ]
+}
