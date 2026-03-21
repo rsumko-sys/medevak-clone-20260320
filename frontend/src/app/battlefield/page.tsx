@@ -55,6 +55,7 @@ export default function BattlefieldPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [recordingLabel, setRecordingLabel] = useState('')
+  const [isWhisperConfigured, setIsWhisperConfigured] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<BlobPart[]>([])
   
@@ -240,6 +241,18 @@ export default function BattlefieldPage() {
     quickProcedures,
   ])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const refreshWhisperConfig = () => {
+      const key = (window.sessionStorage.getItem('whisperApiKey') || '').trim()
+      setIsWhisperConfigured(Boolean(key))
+    }
+
+    refreshWhisperConfig()
+    window.addEventListener('focus', refreshWhisperConfig)
+    return () => window.removeEventListener('focus', refreshWhisperConfig)
+  }, [])
+
   const toggleMechanism = (mech: MechanismOfInjury) => {
     if (mechanisms.includes(mech)) {
       setMechanisms(mechanisms.filter(m => m !== mech))
@@ -305,6 +318,15 @@ export default function BattlefieldPage() {
       return
     }
 
+    const whisperKey = (typeof window !== 'undefined' ? (sessionStorage.getItem('whisperApiKey') || '').trim() : '')
+    if (!whisperKey) {
+      setIsWhisperConfigured(false)
+      setRecordingLabel('Whisper ключ не налаштовано')
+      toast.info('Щоб увімкнути голосовий ввід, додайте whisperApiKey у Налаштуваннях')
+      return
+    }
+    setIsWhisperConfigured(true)
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const recorder = new MediaRecorder(stream)
@@ -318,13 +340,7 @@ export default function BattlefieldPage() {
 
       recorder.onstop = async () => {
         try {
-          const whisperKey = sessionStorage.getItem('whisperApiKey') || ''
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-          if (!whisperKey) {
-            setRecordingLabel('Whisper ключ відсутній у сесії')
-            toast.info('Додайте whisperApiKey у сесію налаштувань')
-            return
-          }
 
           const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
           const transcript = await transcribeAudio(audioFile, whisperKey)
@@ -598,9 +614,19 @@ export default function BattlefieldPage() {
           >
             +
           </button>
-          <button onClick={handleMicClick} className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${isRecording ? 'bg-red-600 border-red-400 animate-[pulse_2s_infinite] text-white shadow-[0_0_20px_rgba(220,38,38,0.7)]' : 'bg-[#2a1a1a] border-[#5a1a1a] text-red-500 hover:bg-red-900/40'}`}>
-            <Mic className="w-5 h-5" />
-          </button>
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={handleMicClick}
+              title={isWhisperConfigured ? 'Whisper: натисніть для старту/стопу запису' : 'Whisper: спочатку додайте API ключ у Налаштуваннях'}
+              aria-label="Whisper голосовий ввід"
+              className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${isRecording ? 'bg-red-600 border-red-400 animate-[pulse_2s_infinite] text-white shadow-[0_0_20px_rgba(220,38,38,0.7)]' : 'bg-[#2a1a1a] border-[#5a1a1a] text-red-500 hover:bg-red-900/40'}`}
+            >
+              <Mic className="w-5 h-5" />
+            </button>
+            <span className={`text-[9px] uppercase tracking-widest ${isWhisperConfigured ? 'text-gray-500' : 'text-amber-400'}`}>
+              {isWhisperConfigured ? 'WHISPER READY' : 'WHISPER KEY MISSING'}
+            </span>
+          </div>
         </div>
       </header>
       {recordingLabel && (
@@ -756,6 +782,26 @@ export default function BattlefieldPage() {
                   className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded"
                   placeholder="Короткі клінічні нотатки, зокрема з голосового вводу"
                 />
+                <div className="mt-3 p-3 border border-[#2a2f3a] rounded bg-[#11151b]">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-gray-300">ГОЛОСОВИЙ ВВІД WHISPER AI</p>
+                      <p className="text-[10px] text-gray-500 mt-1">Натисніть кнопку, продиктуйте клінічний стан і зупиніть запис для автотранскрипції.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleMicClick}
+                      className={`w-full sm:w-auto px-4 py-2 border rounded text-[10px] font-bold tracking-widest uppercase transition-colors ${isRecording ? 'bg-red-900/40 border-red-500 text-red-300' : 'bg-[#1a1d24] border-[#2a2f3a] text-gray-300 hover:border-gray-500'}`}
+                    >
+                      {isRecording ? 'ЗАВЕРШИТИ ЗАПИС' : 'ПОЧАТИ ГОЛОСОВИЙ ВВІД'}
+                    </button>
+                  </div>
+                  {!isWhisperConfigured && (
+                    <p className="mt-2 text-[10px] text-amber-300">
+                      Ключ Whisper не знайдено в сесії. Додайте його у <Link href="/settings" className="underline">Налаштуваннях</Link>, поле "WHISPER API КЛЮЧ (СЕСІЯ)".
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
 
