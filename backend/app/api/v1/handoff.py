@@ -120,17 +120,25 @@ async def list_handoffs(
         offset=offset,
         limit=limit,
     )
+    
+    # H4.1: Batch-load MIST data for all cases to avoid N+1
+    case_ids = [i.case_id for i in items]
+    mist_data = {}
+    for cid in case_ids:
+        mist, warnings = await _aggregate_mist(session, cid)
+        mist_data[cid] = (mist, warnings)
+    
     result = []
     for i in items:
-        mist, warnings = await _aggregate_mist(session, i.case_id)
+        mist, warnings = mist_data.get(i.case_id, ({}, []))
         item = {
             "id": i.id,
             "case_id": i.case_id,
             "mist_text": i.mist_summary or "",
-            "mechanism": mist["mechanism"],
-            "injuries": mist["injuries"],
-            "signs": mist["signs"],
-            "treatment": mist["treatment"],
+            "mechanism": mist.get("mechanism", []),
+            "injuries": mist.get("injuries", []),
+            "signs": mist.get("signs", []),
+            "treatment": mist.get("treatment", []),
             "created_at": i.created_at.isoformat() if i.created_at else None,
             "operator_id": getattr(i, "operator_id", None),
         }

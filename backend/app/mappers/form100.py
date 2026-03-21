@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Mapping
 
 
@@ -25,7 +25,7 @@ def _to_dict_list(items: list[Any] | None, fields: tuple[str, ...]) -> list[dict
 
 def build_form100(case: Any) -> dict[str, Any]:
     """Build canonical Form 100 structure from a case-like object or dict."""
-    generated_at = datetime.utcnow().isoformat()
+    generated_at = datetime.now(timezone.utc).isoformat()
 
     form100 = {
         "standard": "MEDEVAK-FORM-100",

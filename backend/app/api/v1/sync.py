@@ -11,7 +11,7 @@ from app.core.utils import envelope
 from app.services.sync_service import SyncService
 
 
-router = APIRouter(tags=["sync"])
+router = APIRouter(prefix="/sync", tags=["sync"])
 
 
 

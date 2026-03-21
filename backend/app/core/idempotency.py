@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
@@ -20,7 +20,7 @@ async def get_idempotent_response(
     record = result.scalar_one_or_none()
     
     if record:
-        if record.expires_at < datetime.utcnow():
+        if record.expires_at < datetime.now(timezone.utc):
             # Clean up expired record
             await session.delete(record)
             await session.commit()
@@ -41,7 +41,7 @@ async def save_idempotent_response(
     ttl_hours: int = 24
 ):
     """Save a response for an idempotent request."""
-    expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
     
     record = IdempotencyRecord(
         key=key,
@@ -49,7 +49,7 @@ async def save_idempotent_response(
         request_path=path,
         response_code=str(status_code),
         response_body=response_body,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         expires_at=expires_at
     )
     session.add(record)
@@ -57,6 +57,6 @@ async def save_idempotent_response(
 
 async def cleanup_idempotency_records(session: AsyncSession):
     """Remove expired idempotency records."""
-    stmt = delete(IdempotencyRecord).where(IdempotencyRecord.expires_at < datetime.utcnow())
+    stmt = delete(IdempotencyRecord).where(IdempotencyRecord.expires_at < datetime.now(timezone.utc))
     await session.execute(stmt)
     await session.commit()

@@ -1,7 +1,7 @@
 """Normalized Data Schemas."""
 from datetime import datetime
 from typing import Optional, List, Any, Literal
-from pydantic import BaseModel, Field, StrictBool, model_validator
+from pydantic import BaseModel, Field, StrictBool, model_validator, ConfigDict
 
 from app.core.config import ALLOW_GPS
 
@@ -29,8 +29,7 @@ class InjuryResponse(InjuryCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── PROCEDURES ───────────────────────────────────────────────────────────
@@ -49,8 +48,7 @@ class ProcedureResponse(ProcedureCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── MEDICATIONS ──────────────────────────────────────────────────────────
@@ -71,8 +69,7 @@ class MedicationResponse(MedicationCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── VITALS ───────────────────────────────────────────────────────────────
@@ -95,8 +92,7 @@ class VitalsResponse(VitalsCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── MARCH ────────────────────────────────────────────────────────────────
@@ -133,8 +129,7 @@ class MarchResponse(MarchCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── EVENTS ───────────────────────────────────────────────────────────────
@@ -151,8 +146,7 @@ class EventResponse(EventCreate):
     recorded_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── EVACUATION ───────────────────────────────────────────────────────────
@@ -173,8 +167,7 @@ class EvacuationResponse(EvacuationCreate):
     created_at: datetime
     voided: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── CASES ────────────────────────────────────────────────────────────────
@@ -268,8 +261,7 @@ class CaseResponse(BaseModel):
     created_at: datetime
     created_by: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CaseDetailResponse(CaseResponse):

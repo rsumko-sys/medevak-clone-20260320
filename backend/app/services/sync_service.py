@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional, Type
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -54,7 +54,7 @@ class SyncService:
         # Since we only have 'updated_at' at the entity level, we perform a smart update.
         
         remote_updated_at_str = remote_data.get("updated_at")
-        remote_updated_at = datetime.fromisoformat(remote_updated_at_str) if remote_updated_at_str else datetime.utcnow()
+        remote_updated_at = datetime.fromisoformat(remote_updated_at_str) if remote_updated_at_str else datetime.now(timezone.utc)
         local_updated_at = getattr(local_entity, "updated_at", datetime.min)
         
         if remote_version == local_version + 1:
@@ -72,7 +72,7 @@ class SyncService:
                     setattr(local_entity, key, value)
                     
         local_entity.version_id = remote_version
-        local_entity.updated_at = datetime.utcnow()
+        local_entity.updated_at = datetime.now(timezone.utc)
         
         await self.session.commit()
         return True

@@ -9,9 +9,11 @@ from app.core.config import DATABASE_URL
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_async_engine(
-    DATABASE_URL, 
+    DATABASE_URL,
     echo=False,
-    connect_args=connect_args
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    pool_recycle=3600,
 )
 
 # SQLite WAL mode for better concurrency performance

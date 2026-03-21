@@ -22,12 +22,17 @@ export default function DocumentsPage() {
   async function load() {
     try {
       setLoading(true)
-      const [docsData, casesData] = await Promise.all([
+      const results = await Promise.allSettled([
         listDocuments(),
         listCases()
       ])
-      setDocuments(docsData)
-      setCases(casesData)
+      
+      if (results[0].status === 'fulfilled') {
+        setDocuments(results[0].value)
+      }
+      if (results[1].status === 'fulfilled') {
+        setCases(results[1].value)
+      }
     } catch (e) {
       console.error('Failed to load documents/cases:', e)
     } finally {

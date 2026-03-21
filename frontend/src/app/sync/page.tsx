@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { HardDriveUpload, Wifi, WifiOff, Server, Clock, Database, AlertCircle } from 'lucide-react'
 import { getSyncStats, getSyncQueue } from '@/lib/api'
 
@@ -8,6 +8,7 @@ export default function SyncPage() {
   const [stats, setStats] = useState<any>(null)
   const [online, setOnline] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const pending = stats?.pending || 0
   const acked = stats?.acked ?? stats?.synced ?? 0
@@ -79,10 +80,29 @@ export default function SyncPage() {
             <Server className="w-4 h-4 text-blue-500" /> РЕПЛІКАЦІЙНИЙ ЖУРНАЛ
           </h3>
           <button 
-            onClick={async () => { setSyncing(true); try { await getSyncQueue(); const data = await getSyncStats(); setStats(data) } catch {} finally { setSyncing(false) } }}
-            disabled={syncing}
+            onClick={async () => {
+              if (syncing) {
+                abortControllerRef.current?.abort()
+                setSyncing(false)
+                return
+              }
+              setSyncing(true)
+              abortControllerRef.current = new AbortController()
+              try {
+                await getSyncQueue()
+                const data = await getSyncStats()
+                setStats(data)
+              } catch (e) {
+                if (e instanceof Error && e.name !== 'AbortError') {
+                  console.error('Sync error:', e)
+                }
+              } finally {
+                setSyncing(false)
+              }
+            }}
+            disabled={false}
             className="text-[10px] tracking-widest uppercase font-bold text-blue-400 hover:text-white transition-colors disabled:opacity-50">
-            {syncing ? 'СИНХРОНІЗАЦІЯ...' : 'ПРИМУСОВА РЕПЛІКАЦІЯ'}
+            {syncing ? 'СКАСУВАННЯ...' : 'ПРИМУСОВА РЕПЛІКАЦІЯ'}
           </button>
         </div>
         

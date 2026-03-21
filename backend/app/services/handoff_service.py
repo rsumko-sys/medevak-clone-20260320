@@ -1,8 +1,11 @@
 """Handoff service — persists to DB."""
 import uuid
+import logging
 from app.models.evacuation import EvacuationRecord as CaseHandoff
 
 from app.repositories.handoff import HandoffRepository
+
+logger = logging.getLogger(__name__)
 
 
 class HandoffService:
@@ -28,9 +31,14 @@ class HandoffService:
             mist_summary="",
             operator_id=self._user_id,
         )
-        self._session.add(handoff)
-        await self._session.commit()
-        await self._session.refresh(handoff)
+        try:
+            self._session.add(handoff)
+            await self._session.commit()
+            await self._session.refresh(handoff)
+        except Exception as e:
+            await self._session.rollback()
+            logger.error(f"Failed to create handoff for case {case_id}: {e}")
+            raise
         return {"id": handoff.id, "case_id": handoff.case_id, "mist_summary": handoff.mist_summary or ""}
 
     async def update(self, case_id: str, body):
@@ -44,14 +52,24 @@ class HandoffService:
         if items:
             h = items[0]
             h.mist_summary = mist
-            await self._session.commit()
-            await self._session.refresh(h)
+            try:
+                await self._session.commit()
+                await self._session.refresh(h)
+            except Exception as e:
+                await self._session.rollback()
+                logger.error(f"Failed to update handoff for case {case_id}: {e}")
+                raise
             return {"id": h.id, "case_id": h.case_id, "mist_summary": h.mist_summary}
         handoff_id = str(uuid.uuid4())
         handoff = CaseHandoff(id=handoff_id, case_id=case_id, mist_summary=mist, operator_id=self._user_id)
-        self._session.add(handoff)
-        await self._session.commit()
-        await self._session.refresh(handoff)
+        try:
+            self._session.add(handoff)
+            await self._session.commit()
+            await self._session.refresh(handoff)
+        except Exception as e:
+            await self._session.rollback()
+            logger.error(f"Failed to create handoff for case {case_id}: {e}")
+            raise
         return {"id": handoff.id, "case_id": handoff.case_id, "mist_summary": handoff.mist_summary}
 
     async def confirm(self, case_id: str, body):

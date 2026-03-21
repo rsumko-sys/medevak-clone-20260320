@@ -83,7 +83,8 @@ async def list_cases(
     offset: int = 0,
     limit: int = 100,
 ):
-    stmt = select(Case).order_by(Case.created_at.desc()).offset(offset).limit(limit)
+    user_unit = user.get("unit", "")
+    stmt = select(Case).where(Case.unit == user_unit).order_by(Case.created_at.desc()).offset(offset).limit(limit)
     result = await session.execute(stmt)
     cases = result.scalars().all()
     
@@ -101,6 +102,11 @@ async def get_case(
     case = await session.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    
+    # Unit isolation check
+    user_unit = user.get("unit", "")
+    if case.unit != user_unit:
+        raise HTTPException(status_code=403, detail="Unauthorized: Case is in different unit")
 
     # Fetch sub-records
     def get_stmt(model):
@@ -139,6 +145,11 @@ async def update_case(
     case = await session.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    
+    # Unit isolation check
+    user_unit = user.get("unit", "")
+    if case.unit != user_unit:
+        raise HTTPException(status_code=403, detail="Unauthorized: Case is in different unit")
         
     old_values = CaseUpdate.model_validate(case).model_dump()
     _apply_body_to_case(case, body)
@@ -161,6 +172,11 @@ async def delete_case(
     case = await session.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    
+    # Unit isolation check
+    user_unit = user.get("unit", "")
+    if case.unit != user_unit:
+        raise HTTPException(status_code=403, detail="Unauthorized: Case is in different unit")
         
     case.case_status = "VOIDED"
     await log_audit(session, "cases", case_id, "delete", user.get("sub"))

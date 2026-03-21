@@ -383,7 +383,7 @@ def export_case_to_fhir_bundle(case_data: Dict[str, Any]) -> Dict[str, Any]:
             "resourceType": "Bundle",
             "id": f"bundle-{case_data.get('id', 'unknown')}",
             "type": "collection",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "entry": [],
             "error": "FHIR resources not available"
         }

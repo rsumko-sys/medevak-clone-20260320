@@ -20,7 +20,10 @@ export default function FhirStatusPage() {
   async function checkStatus() {
     try {
       setLoading(true)
-      const res = await fetch('http://localhost:8000/api/v1/fhir/status')
+      const apiBase = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? 'http://localhost:8000'
+        : ''
+      const res = await fetch(`${apiBase}/api/fhir/status`)
       if (!res.ok) throw new Error('Не вдалося отримати статус')
       const json = await res.json()
       setStatus(json.data)

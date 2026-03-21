@@ -393,7 +393,11 @@ export default function BattlefieldPage() {
         }
 
         if (extras.length > 0) {
-          await Promise.all(extras)
+          const results = await Promise.allSettled(extras)
+          const failed = results.filter(r => r.status === 'rejected')
+          if (failed.length > 0) {
+            console.warn(`${failed.length}/${results.length} parallel saves failed, but case created`)
+          }
         }
 
         setQuickMedications([])

@@ -39,6 +39,6 @@ def test_api_endpoints():
 
 def test_transcribe_imported_correctly():
     """Tests that the transcribe router is successfully loaded after fixing httpx."""
-    response = client.post("/api/v1/transcribe/upload")
+    response = client.post("/api/transcribe")
     # Even without payload, it should return 422 Unprocessable Entity or 401 instead of 404
     assert response.status_code != 404
