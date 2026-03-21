@@ -78,9 +78,12 @@ export default function BattlefieldPage() {
 
   const validateStep = (stepId: string): { valid: boolean; error: string } => {
     const nextFieldErrors: Record<string, string> = {}
+    const clearedFields: Record<string, string> = {}
     let stepError = ''
 
     if (stepId === 'S1') {
+      clearedFields.callsign = ''
+      clearedFields.mechanisms = ''
       if (!callsign.trim()) {
         nextFieldErrors.callsign = 'Вкажіть позивний'
       }
@@ -93,16 +96,26 @@ export default function BattlefieldPage() {
     }
 
     if (stepId === 'S2' && injuries.length === 0) {
+      clearedFields.injuries = ''
       nextFieldErrors.injuries = 'Додайте щонайменше одну травму на карті тіла'
       stepError = 'Додайте травму перед переходом далі'
     }
 
+    if (stepId === 'S2' && injuries.length > 0) {
+      clearedFields.injuries = ''
+    }
+
     if (stepId === 'S5' && !evacData.destination?.trim()) {
+      clearedFields.destination = ''
       nextFieldErrors.destination = 'Вкажіть пункт призначення'
       stepError = 'Заповніть пункт призначення'
     }
 
-    setFieldErrors((prev) => ({ ...prev, ...nextFieldErrors }))
+    if (stepId === 'S5' && evacData.destination?.trim()) {
+      clearedFields.destination = ''
+    }
+
+    setFieldErrors((prev) => ({ ...prev, ...clearedFields, ...nextFieldErrors }))
     return { valid: stepError === '', error: stepError }
   }
 
@@ -794,7 +807,12 @@ export default function BattlefieldPage() {
           <EvacForm 
             data={evacData} 
             mist={mistSummary} 
-            onChange={setEvacData} 
+            onChange={(nextData) => {
+              setEvacData(nextData)
+              if (nextData?.destination?.trim()) {
+                setFieldErrors((prev) => ({ ...prev, destination: '' }))
+              }
+            }} 
             destinationError={fieldErrors.destination}
             onGenerateMist={handleGenerateMist} 
           />
