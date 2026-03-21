@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Mic, ArrowLeft, Save, X } from 'lucide-react'
 import { createCase, addMarch, addObservation, upsertEvacuation, getMistSummary, addMedication, addProcedure, addEvent, transcribeAudio, VitalsPayload } from '@/lib/api'
@@ -19,6 +19,35 @@ const TABS = [
   { id: 'S4', name: '4. ДІЇ / ВІТАЛЬНІ' },
   { id: 'S5', name: '5. ЕВАК' }
 ]
+
+const MARCH_DEFAULT = {
+  m_tourniquets_applied: 0,
+  a_airway_open: true,
+  a_airway_intervention: 'INTACT',
+  c_radial_pulse: 'Radial',
+}
+
+const EVAC_DEFAULT = { evacuation_priority: 'ROUTINE' }
+
+type StepProgressState = 'not_started' | 'in_progress' | 'done'
+
+const STEP_STATE_META: Record<StepProgressState, { label: string; dotClass: string; textClass: string }> = {
+  not_started: {
+    label: 'не розпочато',
+    dotClass: 'bg-gray-600',
+    textClass: 'text-gray-500',
+  },
+  in_progress: {
+    label: 'в процесі',
+    dotClass: 'bg-amber-500 animate-pulse',
+    textClass: 'text-amber-400',
+  },
+  done: {
+    label: 'завершено',
+    dotClass: 'bg-green-500',
+    textClass: 'text-green-400',
+  },
+}
 
 export default function BattlefieldPage() {
   const toast = useToast()
@@ -51,13 +80,10 @@ export default function BattlefieldPage() {
 
   // S3-S5 State
   const [marchData, setMarchData] = useState<any>({
-    m_tourniquets_applied: 0,
-    a_airway_open: true,
-    a_airway_intervention: 'INTACT',
-    c_radial_pulse: 'Radial'
+    ...MARCH_DEFAULT,
   })
   const [vitalsData, setVitalsData] = useState<any>({})
-  const [evacData, setEvacData] = useState<any>({ evacuation_priority: 'ROUTINE' })
+  const [evacData, setEvacData] = useState<any>({ ...EVAC_DEFAULT })
   const [mistSummary, setMistSummary] = useState('')
   const [savedCaseId, setSavedCaseId] = useState<string | null>(null)
   const [quickMedications, setQuickMedications] = useState<string[]>([])
@@ -166,14 +192,9 @@ export default function BattlefieldPage() {
       setTourniquetTime(draft.tourniquetTime || '')
       setIntakeNotes(draft.intakeNotes || '')
       setInjuries(Array.isArray(draft.injuries) ? draft.injuries : [])
-      setMarchData(draft.marchData || {
-        m_tourniquets_applied: 0,
-        a_airway_open: true,
-        a_airway_intervention: 'INTACT',
-        c_radial_pulse: 'Radial'
-      })
+      setMarchData(draft.marchData || { ...MARCH_DEFAULT })
       setVitalsData(draft.vitalsData || {})
-      setEvacData(draft.evacData || { evacuation_priority: 'ROUTINE' })
+      setEvacData(draft.evacData || { ...EVAC_DEFAULT })
       setQuickMedications(Array.isArray(draft.quickMedications) ? draft.quickMedications : [])
       setQuickProcedures(Array.isArray(draft.quickProcedures) ? draft.quickProcedures : [])
     } catch {
@@ -361,13 +382,8 @@ export default function BattlefieldPage() {
     setIntakeNotes('')
     setInjuries([])
     setVitalsData({})
-    setMarchData({
-      m_tourniquets_applied: 0,
-      a_airway_open: true,
-      a_airway_intervention: 'INTACT',
-      c_radial_pulse: 'Radial'
-    })
-    setEvacData({ evacuation_priority: 'ROUTINE' })
+    setMarchData({ ...MARCH_DEFAULT })
+    setEvacData({ ...EVAC_DEFAULT })
     setQuickMedications([])
     setQuickProcedures([])
     setPendingVoiceEvents([])
@@ -492,9 +508,79 @@ export default function BattlefieldPage() {
 
   const selectedZoneData = BODY_ZONES.find(z => z.id === selectedZoneId)
 
+  const stepProgressById = useMemo<Record<string, StepProgressState>>(() => {
+    const s1Done = callsign.trim().length > 0 && mechanisms.length > 0
+    const s1Touched = s1Done || [fullName, unit, injuryTime, tourniquetTime, intakeNotes].some((value) => value.trim().length > 0) || tourniquetApplied
+
+    const s2Done = injuries.length > 0
+    const s2Touched = s2Done || selectedZoneId !== null
+
+    const marchTouched = Object.keys(marchData || {}).some((key) => {
+      const current = marchData?.[key]
+      const baseline = (MARCH_DEFAULT as Record<string, unknown>)[key]
+      if (baseline !== undefined) return current !== baseline
+      if (typeof current === 'boolean') return current
+      if (typeof current === 'number') return current > 0
+      if (typeof current === 'string') return current.trim().length > 0
+      return Boolean(current)
+    })
+
+    const s3Done = Boolean(
+      marchData?.m_massive_bleeding ||
+      Number(marchData?.m_tourniquets_applied || 0) > 0 ||
+      (marchData?.a_airway_intervention && marchData?.a_airway_intervention !== 'INTACT') ||
+      marchData?.r_chest_seal_applied ||
+      marchData?.r_needle_d_performed ||
+      marchData?.r_chest_tube ||
+      marchData?.c_iv_access ||
+      marchData?.c_pelvic_binder ||
+      marchData?.h_hypothermia_prevented ||
+      marchData?.h_active_warming
+    )
+    const s3Touched = s3Done || marchTouched
+
+    const hasVitals = Object.values(vitalsData || {}).some((value) => value !== '' && value !== null && value !== undefined)
+    const s4Done = hasVitals || quickMedications.length > 0 || quickProcedures.length > 0
+    const s4Touched = s4Done
+
+    const destination = (evacData?.destination || '').trim()
+    const s5Done = destination.length > 0
+    const s5Touched = s5Done || (evacData?.transport_type && evacData.transport_type !== '') || ((evacData?.evacuation_priority || EVAC_DEFAULT.evacuation_priority) !== EVAC_DEFAULT.evacuation_priority)
+
+    const toState = (done: boolean, touched: boolean): StepProgressState => {
+      if (done) return 'done'
+      if (touched) return 'in_progress'
+      return 'not_started'
+    }
+
+    return {
+      S1: toState(s1Done, s1Touched),
+      S2: toState(s2Done, s2Touched),
+      S3: toState(s3Done, s3Touched),
+      S4: toState(s4Done, s4Touched),
+      S5: toState(s5Done, s5Touched),
+    }
+  }, [
+    callsign,
+    fullName,
+    unit,
+    injuryTime,
+    tourniquetTime,
+    intakeNotes,
+    mechanisms,
+    tourniquetApplied,
+    injuries,
+    selectedZoneId,
+    marchData,
+    vitalsData,
+    quickMedications,
+    quickProcedures,
+    evacData,
+  ])
+
   return (
     <div className="h-screen bg-[#0b0d10] text-[#a0a5b0] flex flex-col font-sans relative overflow-hidden">
-      <header className="flex items-center justify-between p-4 border-b border-[#1c1f26] bg-[#0f1217]">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 md:p-4 border-b border-[#1c1f26] bg-[#0f1217]">
         <div className="flex items-center gap-4">
           <Link href="/" className="p-2 bg-[#1c1f26] rounded-md hover:bg-[#2a2f3a] transition-colors border border-[#2a2f3a]">
             <ArrowLeft className="w-5 h-5 text-gray-400" />
@@ -524,15 +610,25 @@ export default function BattlefieldPage() {
       )}
 
       {/* TABS */}
-      <div className="flex flex-wrap border-b border-[#1c1f26] bg-[#0f1217]">
+      <div className="flex overflow-x-auto md:flex-wrap border-b border-[#1c1f26] bg-[#0f1217]">
         {TABS.map(tab => (
+          (() => {
+            const stepState = stepProgressById[tab.id] || 'not_started'
+            const stepMeta = STEP_STATE_META[stepState]
+            return (
           <button
             key={tab.id}
             onClick={() => goToTab(tab.id)}
-            className={`px-4 md:px-6 py-4 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[170px] flex-1 ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
+            className={`px-4 md:px-6 py-3 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[170px] flex-none md:flex-1 ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
           >
-            {tab.name}
+            <div className="flex items-center justify-center gap-2">
+              <span>{tab.name}</span>
+              <span className={`w-2 h-2 rounded-full ${stepMeta.dotClass}`} />
+            </div>
+            <div className={`mt-1 text-[9px] tracking-[0.15em] ${stepMeta.textClass}`}>{stepMeta.label}</div>
           </button>
+            )
+          })()
         ))}
       </div>
 
@@ -621,12 +717,12 @@ export default function BattlefieldPage() {
                {fieldErrors.mechanisms && <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-red-400">{fieldErrors.mechanisms}</p>}
             </section>
 
-            <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md flex items-center justify-between">
+            <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                <div>
                  <h2 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-1">ТУРНІКЕТ НАКЛАДЕНО?</h2>
                  <p className="text-xs text-gray-600 font-mono">Швидка позначка для первинного огляду</p>
                </div>
-               <div className="flex gap-2">
+               <div className="flex gap-2 w-full sm:w-auto">
                  <button onClick={() => setTourniquetApplied(true)} className={`px-6 py-3 font-bold text-sm tracking-widest border rounded transition-colors ${tourniquetApplied ? 'bg-red-900/50 border-red-500 text-red-500' : 'bg-[#181b21] border-[#262a30] text-gray-500 hover:bg-[#1f232b]'}`}>ТАК</button>
                  <button onClick={() => setTourniquetApplied(false)} className={`px-6 py-3 font-bold text-sm tracking-widest border rounded transition-colors ${!tourniquetApplied ? 'bg-[#3b4252] border-[#4c566a] text-white' : 'bg-[#181b21] border-[#262a30] text-gray-500 hover:bg-[#1f232b]'}`}>НІ</button>
                </div>
@@ -860,13 +956,8 @@ export default function BattlefieldPage() {
               setIntakeNotes('')
               setInjuries([])
               setVitalsData({})
-              setMarchData({
-                m_tourniquets_applied: 0,
-                a_airway_open: true,
-                a_airway_intervention: 'INTACT',
-                c_radial_pulse: 'Radial'
-              })
-              setEvacData({ evacuation_priority: 'ROUTINE' })
+              setMarchData({ ...MARCH_DEFAULT })
+              setEvacData({ ...EVAC_DEFAULT })
               setQuickMedications([])
               setQuickProcedures([])
               setPendingVoiceEvents([])
