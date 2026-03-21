@@ -79,8 +79,12 @@ async function apiPatch<T>(path: string, body: unknown, options?: { headers?: Re
   return json.data
 }
 
-export async function listCases() {
-  return apiGet<CaseItem[]>('/cases')
+export async function listCases(options?: { offset?: number; limit?: number }) {
+  const q = new URLSearchParams()
+  if (typeof options?.offset === 'number') q.set('offset', String(options.offset))
+  if (typeof options?.limit === 'number') q.set('limit', String(options.limit))
+  const suffix = q.toString()
+  return apiGet<CaseItem[]>(`/cases${suffix ? `?${suffix}` : ''}`)
 }
 
 export async function updateCase(caseId: string, payload: Partial<CaseItem>) {

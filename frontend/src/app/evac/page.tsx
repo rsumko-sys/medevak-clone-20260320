@@ -6,6 +6,7 @@ import { listCases, updateCase } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
 
 type EvacSortKey = 'newest' | 'oldest' | 'triage' | 'unit'
+const CASES_SLICE_LIMIT = 100
 
 const EVAC_FILTERS_KEY = 'evacTableFilters:v1'
 
@@ -53,7 +54,7 @@ export default function EvacPage() {
   async function load() {
     try {
       setLoading(true)
-      const items = await listCases()
+      const items = await listCases({ offset: 0, limit: CASES_SLICE_LIMIT })
       setCases(items)
     } catch (e) {
       console.error('Failed to load cases:', e)
@@ -148,6 +149,10 @@ export default function EvacPage() {
             Оновити Дані
           </button>
         </div>
+      </div>
+
+      <div className="mb-4 border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+        Показано лише частину даних. Фільтри і сортування застосовуються до поточного завантаженого slice (до {CASES_SLICE_LIMIT} кейсів).
       </div>
 
       {/* Stats Row */}

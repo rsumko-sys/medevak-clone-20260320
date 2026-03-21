@@ -6,6 +6,7 @@ import { listCases, getCase } from '@/lib/api'
 import { CaseDetails, CaseItem } from '@/lib/types'
 
 type CaseSortKey = 'newest' | 'oldest' | 'triage' | 'callsign'
+const CASES_SLICE_LIMIT = 100
 
 function getInitialFilters() {
   if (typeof window === 'undefined') {
@@ -57,7 +58,7 @@ export default function CasesPage() {
   async function loadCases() {
     try {
       setLoading(true)
-      const items = await listCases()
+      const items = await listCases({ offset: 0, limit: CASES_SLICE_LIMIT })
       setCases(items)
       
       const caseIdFromUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') : null
@@ -175,6 +176,9 @@ export default function CasesPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto"><div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
+        <div className="mb-4 border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+          Показано лише частину даних. Фільтри і сортування застосовуються до поточного завантаженого slice (до {CASES_SLICE_LIMIT} кейсів).
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Left sidebar - cases list */}
           <div className="lg:col-span-1">
