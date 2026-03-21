@@ -14,6 +14,10 @@ export default function SettingsPage() {
   const [syncAuthToken, setSyncAuthToken] = useState('')
   const [cachePassphrase, setCachePassphrase] = useState('')
   const [securityPolicy, setSecurityPolicy] = useState<SecurityPolicySettings | null>(null)
+  const [showWipeModal, setShowWipeModal] = useState(false)
+  const [wipeConfirmPhrase, setWipeConfirmPhrase] = useState('')
+
+  const WIPE_PHRASE = 'WIPE LOCAL DATA'
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -42,7 +46,41 @@ export default function SettingsPage() {
   }
 
   const handleEmergencyWipe = () => {
+    setShowWipeModal(true)
+  }
+
+  const logClientAuditEvent = (eventType: string, payload: Record<string, unknown>) => {
+    if (typeof window === 'undefined') return
+    const key = 'clientAuditEvents'
+    const prev = JSON.parse(window.localStorage.getItem(key) || '[]') as Array<Record<string, unknown>>
+    const next = [
+      {
+        event_type: eventType,
+        at: new Date().toISOString(),
+        device_id: deviceId,
+        unit_name: unitName,
+        ...payload,
+      },
+      ...prev,
+    ].slice(0, 200)
+    window.localStorage.setItem(key, JSON.stringify(next))
+  }
+
+  const confirmEmergencyWipe = () => {
+    if (wipeConfirmPhrase.trim() !== WIPE_PHRASE) {
+      toast.error('Фраза підтвердження не збігається')
+      return
+    }
+
+    logClientAuditEvent('settings.emergency_wipe_attempt', {
+      status: 'blocked',
+      reason: 'command_confirmation_required',
+      impact: 'local_storage_and_cached_session_sensitive_data',
+    })
+
     toast.error('Екстренне видалення заблоковано: потрібне підтвердження командування')
+    setShowWipeModal(false)
+    setWipeConfirmPhrase('')
   }
 
   return (
@@ -184,6 +222,51 @@ export default function SettingsPage() {
           <Save className="w-4 h-4" /> ЗБЕРЕГТИ НАЛАШТУВАННЯ
         </button>
       </div>
+
+      {showWipeModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-xl wolf-panel p-6 border border-red-900/50">
+            <h3 className="text-sm font-bold tracking-widest uppercase text-red-400 mb-3">
+              Підтвердження екстренного видалення
+            </h3>
+            <div className="text-xs text-gray-300 space-y-2 mb-4">
+              <p>Impact summary:</p>
+              <p>- буде очищено локальні кешовані дані цього терміналу</p>
+              <p>- буде втрачено локальні сесійні секрети (Whisper/Sync/Cache passphrase)</p>
+              <p>- операція аудитується на клієнті як критична подія</p>
+            </div>
+            <label className="block text-[10px] text-gray-500 uppercase font-bold mb-2">
+              Введіть фразу: {WIPE_PHRASE}
+            </label>
+            <input
+              type="text"
+              value={wipeConfirmPhrase}
+              onChange={(e) => setWipeConfirmPhrase(e.target.value)}
+              className="wolf-input w-full mb-4"
+              placeholder={WIPE_PHRASE}
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowWipeModal(false)
+                  setWipeConfirmPhrase('')
+                }}
+                className="wolf-btn"
+                type="button"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={confirmEmergencyWipe}
+                className="wolf-btn border-red-900/50 text-red-400"
+                type="button"
+              >
+                Підтвердити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
