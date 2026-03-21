@@ -350,7 +350,24 @@ def export_case_to_fhir_bundle(case_data: Dict[str, Any]) -> Dict[str, Any]:
 
     bundle = FHIRMapper.create_fhir_bundle(case=case)
     if bundle:
-        return bundle.dict(exclude_none=True)
+        result = bundle.dict(exclude_none=True)
+        march_notes = case_data.get("march_notes") or {}
+        notes_parts = []
+        for key in ("m_notes", "a_notes", "r_notes", "c_notes", "h_notes"):
+            value = march_notes.get(key)
+            if value:
+                notes_parts.append(f"{key}: {value}")
+        if notes_parts:
+            result.setdefault("entry", []).append({
+                "resource": {
+                    "resourceType": "Observation",
+                    "status": "final",
+                    "code": {"text": "MARCH Notes"},
+                    "subject": {"reference": f"Patient/{case_data.get('id', '')}"},
+                    "valueString": " | ".join(notes_parts),
+                }
+            })
+        return result
     
     return {
         "resourceType": "Bundle",

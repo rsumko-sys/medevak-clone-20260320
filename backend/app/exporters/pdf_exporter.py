@@ -11,7 +11,13 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 def export_case_to_pdf(case: dict[str, Any]) -> bytes:
     """Export case to PDF bytes."""
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2 * cm, leftMargin=2 * cm)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=2 * cm,
+        leftMargin=2 * cm,
+        pageCompression=0,
+    )
     styles = getSampleStyleSheet()
     story = []
 
@@ -23,6 +29,21 @@ def export_case_to_pdf(case: dict[str, Any]) -> bytes:
     story.append(Paragraph(f"<b>Mechanism:</b> {case.get('mechanism_of_injury') or case.get('mechanism') or '—'}", styles["Normal"]))
     story.append(Paragraph(f"<b>Notes:</b> {case.get('notes', '—')}", styles["Normal"]))
     story.append(Spacer(1, 0.5 * cm))
+
+    march_notes = case.get("march_notes") or {}
+    march_rows = [
+        ["M", str(march_notes.get("m_notes") or "—")],
+        ["A", str(march_notes.get("a_notes") or "—")],
+        ["R", str(march_notes.get("r_notes") or "—")],
+        ["C", str(march_notes.get("c_notes") or "—")],
+        ["H", str(march_notes.get("h_notes") or "—")],
+    ]
+    if any(row[1] != "—" for row in march_rows):
+        story.append(Paragraph("MARCH Notes", styles["Heading2"]))
+        t = Table([["Block", "Notes"], *march_rows])
+        t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), "#e0e0e0"), ("GRID", (0, 0), (-1, -1), 0.5, "#ccc")]))
+        story.append(t)
+        story.append(Spacer(1, 0.3 * cm))
 
     obs = case.get("observations") or []
     if obs:
