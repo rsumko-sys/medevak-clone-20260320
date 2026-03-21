@@ -45,7 +45,7 @@ export default function CommandPage() {
   const recentCases = cases.slice(0, 5)
 
   return (
-    <div className="flex-1 p-6 space-y-6">
+    <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6">
       
       {/* Page Title (Internal) */}
       <div className="mb-2">
@@ -53,7 +53,7 @@ export default function CommandPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           title="всього поранених" 
           value={stats.total} 
@@ -83,7 +83,7 @@ export default function CommandPage() {
       </div>
 
       {/* Middle Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <TriageDistributor stats={stats.triage} />
         <EvacuationStatus />
       </div>

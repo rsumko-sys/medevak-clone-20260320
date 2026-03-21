@@ -10,9 +10,9 @@ interface PatientTableProps {
 
 export default function PatientTable({ cases, loading }: PatientTableProps) {
   return (
-    <div className="wolf-panel p-5 overflow-hidden">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-bold tracking-widest uppercase text-white">ОСТАННІ ПАЦІЄНТИ</h3>
+    <div className="wolf-panel p-4 md:p-5 overflow-hidden">
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+        <h3 className="text-xs md:text-sm font-bold tracking-widest uppercase text-white">ОСТАННІ ПАЦІЄНТИ</h3>
         <Link
           href="/cases"
           className="text-[10px] tracking-widest uppercase font-bold text-gray-400 hover:text-white transition-colors flex items-center gap-1"
@@ -23,7 +23,7 @@ export default function PatientTable({ cases, loading }: PatientTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[700px] text-left border-collapse">
           <thead>
             <tr className="border-b border-[#262a30] text-[10px] text-gray-500 uppercase tracking-widest">
               <th className="py-3 px-2 font-medium">ПОЗИВНИЙ</th>

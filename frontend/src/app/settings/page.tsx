@@ -84,8 +84,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-      <header className="mb-8">
+    <div className="flex-1 p-4 md:p-6 space-y-5 md:space-y-6 overflow-y-auto">
+      <header className="mb-4 md:mb-8">
         <h1 className="wolf-h1">НАЛАШТУВАННЯ СИСТЕМИ</h1>
         <p className="wolf-title text-gray-500">конфігурація терміналу та безпеки</p>
       </header>
@@ -214,10 +214,10 @@ export default function SettingsPage() {
 
       </div>
 
-      <div className="sticky bottom-0 pt-6 pb-2 pb-safe-area">
+      <div className="sticky bottom-0 pt-4 md:pt-6 pb-2 pb-safe-area bg-[#0b0d10]/80 backdrop-blur-sm">
         <button 
           onClick={handleSave}
-          className="flex items-center gap-3 px-8 py-4 bg-red-900 hover:bg-red-800 border border-red-700 text-white font-bold tracking-widest text-xs uppercase transition-colors shadow-lg"
+          className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-red-900 hover:bg-red-800 border border-red-700 text-white font-bold tracking-widest text-xs uppercase transition-colors shadow-lg"
         >
           <Save className="w-4 h-4" /> ЗБЕРЕГТИ НАЛАШТУВАННЯ
         </button>
@@ -245,20 +245,20 @@ export default function SettingsPage() {
               className="wolf-input w-full mb-4"
               placeholder={WIPE_PHRASE}
             />
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
               <button
                 onClick={() => {
                   setShowWipeModal(false)
                   setWipeConfirmPhrase('')
                 }}
-                className="wolf-btn"
+                className="wolf-btn w-full sm:w-auto"
                 type="button"
               >
                 Скасувати
               </button>
               <button
                 onClick={confirmEmergencyWipe}
-                className="wolf-btn border-red-900/50 text-red-400"
+                className="wolf-btn w-full sm:w-auto border-red-900/50 text-red-400"
                 type="button"
               >
                 Підтвердити
