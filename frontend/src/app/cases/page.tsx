@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { listCases, getCase } from '@/lib/api'
+import { createForm100, getCase, updateForm100, listCases } from '@/lib/api'
 import { CaseDetails, CaseItem } from '@/lib/types'
+import { buildDraftFromForm100, buildPayloadFromDraft, emptyForm100Draft } from '@/lib/form100-ui-sync'
 
 type CaseSortKey = 'newest' | 'oldest' | 'triage' | 'callsign'
 const CASES_SLICE_LIMIT = 100
@@ -42,6 +43,8 @@ export default function CasesPage() {
   const [filterStatus, setFilterStatus] = useState(initial.status)
   const [filterUnit, setFilterUnit] = useState(initial.unit)
   const [sortBy, setSortBy] = useState<CaseSortKey>(initial.sort)
+  const [savingForm100, setSavingForm100] = useState(false)
+  const [form100Draft, setForm100Draft] = useState(() => emptyForm100Draft())
 
   const updateQuery = (updates: Record<string, string | null>) => {
     if (typeof window === 'undefined') return
@@ -81,6 +84,42 @@ export default function CasesPage() {
       updateQuery({ id: caseId })
     } catch (e) {
       console.error('Failed to load case details:', e)
+    }
+  }
+
+  useEffect(() => {
+    const f = selectedCase?.form100
+    if (!f) {
+      setForm100Draft(emptyForm100Draft())
+      return
+    }
+
+    setForm100Draft(buildDraftFromForm100(f))
+  }, [selectedCase?.id, selectedCase?.form100])
+
+  async function saveForm100() {
+    if (!selectedCase) return
+    if (!form100Draft.document_number || !form100Draft.injury_datetime || !form100Draft.injury_location || !form100Draft.injury_mechanism || !form100Draft.diagnosis_summary || !form100Draft.documented_by) {
+      alert('Form 100: заповніть обов\'язкові поля')
+      return
+    }
+
+    setSavingForm100(true)
+    try {
+      const payload = buildPayloadFromDraft(form100Draft)
+      if (selectedCase.form100?.id) {
+        await updateForm100(selectedCase.id, payload)
+      } else {
+        await createForm100(selectedCase.id, payload)
+      }
+      const refreshed = await getCase(selectedCase.id)
+      setSelectedCase(refreshed)
+      alert('Form 100 збережено')
+    } catch (e) {
+      console.error('Failed to save Form 100', e)
+      alert('Не вдалося зберегти Form 100')
+    } finally {
+      setSavingForm100(false)
     }
   }
 
@@ -376,6 +415,77 @@ export default function CasesPage() {
                     <div className="text-sm text-gray-300">{selectedCase.notes}</div>
                   </div>
                 )}
+
+                <div className="wolf-panel p-4">
+                  <div className="wolf-title mb-3">FORM 100 (ОФІЦІЙНИЙ ОБЛІК ПОРАНЕННЯ)</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input className="wolf-input" placeholder="Номер документа *" value={form100Draft.document_number} onChange={(e) => setForm100Draft((s) => ({ ...s, document_number: e.target.value }))} />
+                    <input className="wolf-input" type="datetime-local" placeholder="Дата/час травми *" value={form100Draft.injury_datetime} onChange={(e) => setForm100Draft((s) => ({ ...s, injury_datetime: e.target.value }))} />
+                    <input className="wolf-input" placeholder="Локація травми *" value={form100Draft.injury_location} onChange={(e) => setForm100Draft((s) => ({ ...s, injury_location: e.target.value }))} />
+                    <input className="wolf-input" placeholder="Механізм травми *" value={form100Draft.injury_mechanism} onChange={(e) => setForm100Draft((s) => ({ ...s, injury_mechanism: e.target.value }))} />
+                    <input className="wolf-input" placeholder="Хто документував *" value={form100Draft.documented_by} onChange={(e) => setForm100Draft((s) => ({ ...s, documented_by: e.target.value }))} />
+                    <label className="flex items-center gap-2 text-sm text-gray-300 px-2">
+                      <input type="checkbox" checked={form100Draft.commander_notified} onChange={(e) => setForm100Draft((s) => ({ ...s, commander_notified: e.target.checked }))} />
+                      Командування повідомлено
+                    </label>
+                  </div>
+                  <textarea className="wolf-input w-full mt-3" placeholder="Діагноз *" rows={3} value={form100Draft.diagnosis_summary} onChange={(e) => setForm100Draft((s) => ({ ...s, diagnosis_summary: e.target.value }))} />
+                  <textarea className="wolf-input w-full mt-3" placeholder="Лікування (опційно)" rows={2} value={form100Draft.treatment_summary} onChange={(e) => setForm100Draft((s) => ({ ...s, treatment_summary: e.target.value }))} />
+                  <textarea className="wolf-input w-full mt-3" placeholder="Рекомендація щодо евакуації (опційно)" rows={2} value={form100Draft.evacuation_recommendation} onChange={(e) => setForm100Draft((s) => ({ ...s, evacuation_recommendation: e.target.value }))} />
+                  <textarea className="wolf-input w-full mt-3" placeholder="Додаткові примітки (опційно)" rows={2} value={form100Draft.notes} onChange={(e) => setForm100Draft((s) => ({ ...s, notes: e.target.value }))} />
+
+                  <div className="mt-4 border-t border-[#2a2f37] pt-3">
+                    <div className="text-sm font-semibold mb-2">Canonical: Stub / Markers / Evac / Stage log</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input className="wolf-input" type="datetime-local" placeholder="Stub: issued_at" value={form100Draft.stub_issued_at} onChange={(e) => setForm100Draft((s) => ({ ...s, stub_issued_at: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Legal status" value={form100Draft.legal_status} onChange={(e) => setForm100Draft((s) => ({ ...s, legal_status: e.target.value }))} />
+
+                      <input className="wolf-input" placeholder="Evac transport" value={form100Draft.evacuation_transport} onChange={(e) => setForm100Draft((s) => ({ ...s, evacuation_transport: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Evac destination" value={form100Draft.evacuation_destination} onChange={(e) => setForm100Draft((s) => ({ ...s, evacuation_destination: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Evac position" value={form100Draft.evacuation_position} onChange={(e) => setForm100Draft((s) => ({ ...s, evacuation_position: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Evac priority" value={form100Draft.evacuation_priority} onChange={(e) => setForm100Draft((s) => ({ ...s, evacuation_priority: e.target.value }))} />
+
+                      <input className="wolf-input" placeholder="Body diagram placeholder model" value={form100Draft.body_diagram_placeholder_model} onChange={(e) => setForm100Draft((s) => ({ ...s, body_diagram_placeholder_model: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Body mark type" value={form100Draft.body_mark_type} onChange={(e) => setForm100Draft((s) => ({ ...s, body_mark_type: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Body mark location" value={form100Draft.body_mark_location} onChange={(e) => setForm100Draft((s) => ({ ...s, body_mark_location: e.target.value }))} />
+                      <input className="wolf-input" placeholder="Body mark notes" value={form100Draft.body_mark_notes} onChange={(e) => setForm100Draft((s) => ({ ...s, body_mark_notes: e.target.value }))} />
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-sm">
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.stub_isolation_flag} onChange={(e) => setForm100Draft((s) => ({ ...s, stub_isolation_flag: e.target.checked }))} /> Stub isolation</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.stub_urgent_care_flag} onChange={(e) => setForm100Draft((s) => ({ ...s, stub_urgent_care_flag: e.target.checked }))} /> Stub urgent</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.stub_sanitary_processing_flag} onChange={(e) => setForm100Draft((s) => ({ ...s, stub_sanitary_processing_flag: e.target.checked }))} /> Stub sanitary</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.first_eme_completed} onChange={(e) => setForm100Draft((s) => ({ ...s, first_eme_completed: e.target.checked }))} /> First EME</label>
+
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.triage_red_urgent_care} onChange={(e) => setForm100Draft((s) => ({ ...s, triage_red_urgent_care: e.target.checked }))} /> Red urgent</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.triage_yellow_sanitary_processing} onChange={(e) => setForm100Draft((s) => ({ ...s, triage_yellow_sanitary_processing: e.target.checked }))} /> Yellow sanitary</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.triage_black_isolation} onChange={(e) => setForm100Draft((s) => ({ ...s, triage_black_isolation: e.target.checked }))} /> Black isolation</label>
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.triage_blue_radiation_measures} onChange={(e) => setForm100Draft((s) => ({ ...s, triage_blue_radiation_measures: e.target.checked }))} /> Blue radiation</label>
+
+                      <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" checked={form100Draft.continuity_required} onChange={(e) => setForm100Draft((s) => ({ ...s, continuity_required: e.target.checked }))} /> Continuity required</label>
+                    </div>
+
+                    <textarea
+                      className="wolf-input w-full mt-3 font-mono text-xs"
+                      placeholder="Back-side stage_log JSON array"
+                      rows={7}
+                      value={form100Draft.stage_log_text}
+                      onChange={(e) => setForm100Draft((s) => ({ ...s, stage_log_text: e.target.value }))}
+                    />
+                    <div className="text-xs text-gray-500 mt-1">stage_log має бути JSON-масивом (invalid JSON буде збережено як порожній масив)</div>
+                  </div>
+
+                  {selectedCase.form100?.front_side && (
+                    <pre className="mt-3 max-h-48 overflow-auto text-xs text-gray-400 border border-[#2a2f37] p-2">{JSON.stringify(selectedCase.form100.front_side, null, 2)}</pre>
+                  )}
+
+                  <div className="mt-3 flex justify-end">
+                    <button className="wolf-btn" onClick={saveForm100} disabled={savingForm100}>
+                      {savingForm100 ? 'Збереження...' : (selectedCase.form100?.id ? 'Оновити Form 100' : 'Створити Form 100')}
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">* обов'язкові поля для офіційної фіксації</div>
+                </div>
               </div>
             ) : (
               <div className="wolf-panel p-8 text-center text-gray-400">

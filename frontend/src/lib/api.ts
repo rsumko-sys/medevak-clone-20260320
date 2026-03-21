@@ -3,6 +3,11 @@ import {
   AuditEntry,
   CaseDetails,
   CaseItem,
+  Form100BackSide,
+  Form100FrontSide,
+  Form100MetaLegalRules,
+  Form100Record,
+  Form100Stub,
   FieldCommit,
   FieldDispatchLog,
   FieldFinalizeResponse,
@@ -97,6 +102,35 @@ export async function createCase(payload: any) {
 
 export async function getCase(caseId: string) {
   return apiGet<CaseDetails>(`/cases/${caseId}`)
+}
+
+export type Form100Payload = {
+  document_number: string
+  injury_datetime: string
+  injury_location: string
+  injury_mechanism: string
+  diagnosis_summary: string
+  documented_by: string
+  treatment_summary?: string
+  evacuation_recommendation?: string
+  commander_notified?: boolean
+  notes?: string
+  stub?: Form100Stub
+  front_side?: Form100FrontSide
+  back_side?: Form100BackSide
+  meta_legal_rules?: Form100MetaLegalRules
+}
+
+export async function getForm100(caseId: string) {
+  return apiGet<Form100Record>(`/cases/${caseId}/form100`)
+}
+
+export async function createForm100(caseId: string, payload: Form100Payload) {
+  return apiPost<Form100Record>(`/cases/${caseId}/form100`, payload)
+}
+
+export async function updateForm100(caseId: string, payload: Partial<Form100Payload>) {
+  return apiPatch<Form100Record>(`/cases/${caseId}/form100`, payload)
 }
 
 export async function addInjury(caseId: string, payload: any) {

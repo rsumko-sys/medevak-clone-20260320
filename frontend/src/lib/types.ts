@@ -125,11 +125,141 @@ export interface MedicationItem {
   administered_at?: string | null
 }
 
+export interface Form100Stub {
+  issued_at?: string | null
+  isolation_flag?: boolean | null
+  urgent_care_flag?: boolean | null
+  sanitary_processing_flag?: boolean | null
+}
+
+export interface Form100FrontSideIdentity {
+  rank?: string | null
+  unit_name?: string | null
+  full_name?: string | null
+  identity_document?: string | null
+  personal_number?: string | null
+  sex?: string | null
+}
+
+export interface Form100BodyDiagramMark {
+  wound_mark_type?: string | null
+  wound_mark_location?: string | null
+  wound_mark_notes?: string | null
+}
+
+export interface Form100FrontSideInjury {
+  injury_or_illness_datetime?: string | null
+  sanitary_loss_type?: string | null
+  injury_category_codes?: string[] | null
+  tourniquet_applied_at?: string | null
+  diagnosis?: string | null
+  injury_mechanism?: string | null
+  body_diagram_marks?: Form100BodyDiagramMark[] | null
+}
+
+export interface Form100FrontSideTreatment {
+  antibiotic?: string | null
+  serum_pps_pgs?: string | null
+  anatoxin?: string | null
+  antidote?: string | null
+  painkiller?: string | null
+  blood_transfusion?: string | null
+  blood_substitutes?: string | null
+  immobilization?: string | null
+  bandaging?: string | null
+  sanitary_processing_type?: string | null
+  treatment_notes?: string | null
+}
+
+export interface Form100FrontSideEvacuation {
+  evacuation_transport?: string | null
+  evacuation_destination?: string | null
+  evacuation_position?: string | null
+  evacuation_priority?: string | null
+  recommendation_notes?: string | null
+}
+
+export interface Form100FrontSideTriageMarkers {
+  red_urgent_care?: boolean | null
+  yellow_sanitary_processing?: boolean | null
+  black_isolation?: boolean | null
+  blue_radiation_measures?: boolean | null
+}
+
+export interface Form100FrontSideBodyDiagram {
+  body_diagram_marks?: Form100BodyDiagramMark[] | null
+  placeholder_model?: string | null
+}
+
+export interface Form100FrontSide {
+  identity?: Form100FrontSideIdentity | null
+  injury?: Form100FrontSideInjury | null
+  treatment?: Form100FrontSideTreatment | null
+  evacuation?: Form100FrontSideEvacuation | null
+  triage_markers?: Form100FrontSideTriageMarkers | null
+  body_diagram?: Form100FrontSideBodyDiagram | null
+}
+
+export interface Form100BackSideStageEntry {
+  arrived_at?: string | null
+  stage_name?: string | null
+  physician_notes?: string | null
+  refined_diagnosis?: string | null
+  self_exited?: boolean | null
+  carried_by?: string | null
+  care_provided?: string | null
+  time_after_injury?: string | null
+  first_aid_provided?: string | null
+  evacuate_to_when?: string | null
+  result?: string | null
+}
+
+export interface Form100BackSideSignature {
+  physician_name?: string | null
+  physician_signature?: string | null
+  signed_at?: string | null
+}
+
+export interface Form100BackSide {
+  stage_log?: Form100BackSideStageEntry[] | null
+  signature?: Form100BackSideSignature | null
+}
+
+export interface Form100MetaLegalRules {
+  legal_status?: string | null
+  first_eme_completed?: boolean | null
+  continuity_required?: boolean | null
+  commander_notified?: boolean | null
+  additional_notes?: string | null
+}
+
+export interface Form100Record {
+  id: string
+  case_id: string
+  document_number: string
+  injury_datetime: string
+  injury_location: string
+  injury_mechanism: string
+  diagnosis_summary: string
+  documented_by: string
+  treatment_summary?: string | null
+  evacuation_recommendation?: string | null
+  commander_notified?: boolean | null
+  notes?: string | null
+  stub?: Form100Stub | null
+  front_side?: Form100FrontSide | null
+  back_side?: Form100BackSide | null
+  meta_legal_rules?: Form100MetaLegalRules | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
 export interface CaseDetails extends CaseItem {
   injuries: InjuryRecord[]
   observations: ObservationItem[]
   procedures: ProcedureItem[]
   sub_medications: MedicationItem[]
+  form100?: Form100Record | null
 }
 
 export interface AuditEntry {
