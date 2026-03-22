@@ -12,6 +12,7 @@ export default function CasesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterTriage, setFilterTriage] = useState('all')
+  const [error, setError] = useState<string | null>(null)
 
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const caseIdParam = searchParams?.get('id')
@@ -19,6 +20,7 @@ export default function CasesPage() {
   async function loadCases() {
     try {
       setLoading(true)
+      setError(null)
       const items = await listCases()
       setCases(items)
       
@@ -29,6 +31,7 @@ export default function CasesPage() {
       }
     } catch (e) {
       console.error('Failed to load cases:', e)
+      setError("Помилка завантаження кейсів. Перевірте з'єднання з сервером.")
     } finally {
       setLoading(false)
     }
@@ -40,6 +43,7 @@ export default function CasesPage() {
       setSelectedCase(details)
     } catch (e) {
       console.error('Failed to load case details:', e)
+      setError('Помилка завантаження деталей кейсу.')
     }
   }
 
@@ -88,6 +92,12 @@ export default function CasesPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto"><div className="max-w-7xl mx-auto px-4 py-6">
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-900/50 rounded-md text-red-400 text-xs font-bold uppercase tracking-widest flex items-center justify-between">
+            <span>⚠ {error}</span>
+            <button onClick={loadCases} className="underline text-red-300 hover:text-white">Повторити</button>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Left sidebar - cases list */}
           <div className="lg:col-span-1">
@@ -126,7 +136,7 @@ export default function CasesPage() {
                     <button
                       key={caseItem.id}
                       onClick={() => selectCase(caseItem.id)}
-                      className={`w-full text-left p-2 border border-[#2a2f37] hover:border-red-500 transition-colors ${
+                      className={`w-full text-left p-2 border border-borderContent hover:border-red-500 transition-colors ${
                         selectedCase?.id === caseItem.id ? 'border-red-500' : ''
                       }`}
                     >
@@ -230,7 +240,7 @@ export default function CasesPage() {
                   <div className="space-y-2 max-h-48 overflow-auto">
                     {selectedCase.injuries && selectedCase.injuries.length > 0 ? (
                       selectedCase.injuries.map((injury, idx) => (
-                        <div key={idx} className="text-sm border-b border-[#2a2f37] pb-1">
+                        <div key={idx} className="text-sm border-b border-borderContent pb-1">
                           <div className="flex justify-between items-center">
                             <span className="font-bold">{injury.body_region}</span>
                             <span className="text-xs text-gray-400">{injury.severity}</span>

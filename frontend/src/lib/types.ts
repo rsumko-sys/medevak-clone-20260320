@@ -65,6 +65,12 @@ export interface ApiEnvelope<T> {
   request_id?: string
 }
 
+export interface BloodInventoryItem {
+  blood_type: string
+  quantity: number
+  updated_at?: string | null
+}
+
 export interface CaseItem {
   id: string
   case_number?: string | null

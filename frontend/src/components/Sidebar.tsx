@@ -103,9 +103,6 @@ export default function Sidebar() {
 
       {/* Bottom Area */}
       <div className="p-4 border-t border-[#1a1d24] flex flex-col gap-3">
-        <Link href="/settings" className="p-2 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-white transition-colors">
-          <Settings className="w-4 h-4" />
-        </Link>
         <Link href="/battlefield" className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors">
           <ShieldAlert className="w-4 h-4 text-red-500" />
           <span>Бойовий режим</span>

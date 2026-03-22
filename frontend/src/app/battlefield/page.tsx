@@ -27,6 +27,8 @@ export default function BattlefieldPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [hasDraftRestored, setHasDraftRestored] = useState(false)
   const [recordingLabel, setRecordingLabel] = useState('')
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<BlobPart[]>([])
   
@@ -468,6 +470,14 @@ export default function BattlefieldPage() {
 
   const selectedZoneData = BODY_ZONES.find(z => z.id === selectedZoneId)
 
+  const tabComplete: Record<string, boolean> = {
+    S1: callsign.trim() !== '',
+    S2: injuries.length > 0,
+    S3: (marchData.m_tourniquets_applied ?? 0) > 0 || marchData.a_airway_intervention !== 'INTACT',
+    S4: Object.keys(vitalsData).length > 0 || quickMedications.length > 0 || quickProcedures.length > 0,
+    S5: evacData.evacuation_priority !== 'ROUTINE' || !!evacData.transport_type,
+  }
+
   return (
     <div className="h-screen bg-[#0b0d10] text-[#a0a5b0] flex flex-col font-sans relative overflow-hidden">
       <header className="grid grid-cols-3 items-center p-4 border-b border-[#1c1f26] bg-[#0f1217]">
@@ -537,7 +547,10 @@ export default function BattlefieldPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-4 py-3 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[130px] ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
           >
-            {tab.name}
+            <span className="flex items-center justify-center gap-1.5">
+              {tabComplete[tab.id] && <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />}
+              {tab.name}
+            </span>
           </button>
         ))}
       </div>
@@ -562,7 +575,7 @@ export default function BattlefieldPage() {
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   maxLength={140}
-                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded"
+                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded-md"
                 />
                 <input
                   type="text"
@@ -570,7 +583,7 @@ export default function BattlefieldPage() {
                   value={unit}
                   onChange={e => setUnit(e.target.value)}
                   maxLength={80}
-                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded uppercase"
+                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded-md uppercase"
                 />
               </div>
             </section>
@@ -635,7 +648,7 @@ export default function BattlefieldPage() {
                   type="datetime-local"
                   value={injuryTime}
                   onChange={(e) => setInjuryTime(e.target.value)}
-                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded"
+                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded-md"
                 />
               </div>
               <div>
@@ -644,7 +657,7 @@ export default function BattlefieldPage() {
                   type="datetime-local"
                   value={tourniquetTime}
                   onChange={(e) => setTourniquetTime(e.target.value)}
-                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded"
+                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded-md"
                 />
               </div>
               <div className="lg:col-span-2">
@@ -653,7 +666,7 @@ export default function BattlefieldPage() {
                   value={intakeNotes}
                   onChange={(e) => setIntakeNotes(e.target.value)}
                   rows={4}
-                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded"
+                  className="w-full bg-[#181b21] border border-[#2a2f3a] p-3 text-sm text-white rounded-md"
                   placeholder="Короткі клінічні нотатки, зокрема з голосового вводу"
                 />
               </div>
@@ -767,9 +780,16 @@ export default function BattlefieldPage() {
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => setInjuries(injuries.filter(i => i.id !== inj.id))} className="text-gray-600 hover:text-red-500 bg-[#111] border border-[#222] rounded p-1.5 transition-colors">
-                              <X className="w-3 h-3"/>
-                            </button>
+                            {pendingDeleteId === inj.id ? (
+                              <div className="flex gap-1">
+                                <button onClick={() => { setInjuries(injuries.filter(i => i.id !== inj.id)); setPendingDeleteId(null) }} className="text-red-400 bg-red-900/40 border border-red-700 rounded px-2 py-1 text-[10px] font-bold uppercase">ТАК</button>
+                                <button onClick={() => setPendingDeleteId(null)} className="text-gray-400 bg-[#111] border border-[#222] rounded px-2 py-1 text-[10px] font-bold uppercase">НІ</button>
+                              </div>
+                            ) : (
+                              <button onClick={() => setPendingDeleteId(inj.id)} className="text-gray-600 hover:text-red-500 bg-[#111] border border-[#222] rounded p-1.5 transition-colors">
+                                <X className="w-3 h-3"/>
+                              </button>
+                            )}
                          </div>
                        ))}
                     </div>
@@ -830,37 +850,55 @@ export default function BattlefieldPage() {
             <span className="text-blue-500">ШВИДКІ ПРОЦЕДУРИ {quickProcedures.length}</span>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
-          <button
-            onClick={() => {
-              setCallsign('')
-              setFullName('')
-              setUnit('')
-              setInjuryTime('')
-              setTourniquetApplied(false)
-              setTourniquetTime('')
-              setIntakeNotes('')
-              setInjuries([])
-              setVitalsData({})
-              setMarchData({
-                m_tourniquets_applied: 0,
-                a_airway_open: true,
-                a_airway_intervention: 'INTACT',
-                c_radial_pulse: 'Radial'
-              })
-              setEvacData({ evacuation_priority: 'ROUTINE' })
-              setQuickMedications([])
-              setQuickProcedures([])
-              setPendingVoiceEvents([])
-              if (typeof window !== 'undefined') {
-                window.localStorage.removeItem('battlefieldDraft')
-              }
-              setActiveTab('S1')
-                              toast.info('Чернетку скасовано')
-            }}
-            className="flex-1 md:flex-none px-6 py-4 bg-[#1a202c] hover:bg-[#252d3d] border border-[#2d3748] rounded text-gray-300 font-bold tracking-[0.1em] text-[10px] md:text-xs uppercase transition-colors"
-          >
-            СКАСУВАТИ
-          </button>
+          {confirmCancel ? (
+            <div className="flex gap-2 flex-1 md:flex-none">
+              <button
+                onClick={() => {
+                  setCallsign('')
+                  setFullName('')
+                  setUnit('')
+                  setInjuryTime('')
+                  setTourniquetApplied(false)
+                  setTourniquetTime('')
+                  setIntakeNotes('')
+                  setInjuries([])
+                  setVitalsData({})
+                  setMarchData({
+                    m_tourniquets_applied: 0,
+                    a_airway_open: true,
+                    a_airway_intervention: 'INTACT',
+                    c_radial_pulse: 'Radial'
+                  })
+                  setEvacData({ evacuation_priority: 'ROUTINE' })
+                  setQuickMedications([])
+                  setQuickProcedures([])
+                  setPendingVoiceEvents([])
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.removeItem('battlefieldDraft')
+                  }
+                  setActiveTab('S1')
+                  setConfirmCancel(false)
+                  toast.info('Чернетку скасовано')
+                }}
+                className="flex-1 px-4 py-4 bg-red-900/40 border border-red-700 rounded text-red-400 font-bold tracking-[0.1em] text-xs uppercase transition-colors"
+              >
+                ПІДТВЕРДИТИ
+              </button>
+              <button
+                onClick={() => setConfirmCancel(false)}
+                className="flex-1 px-4 py-4 bg-[#1a202c] hover:bg-[#252d3d] border border-[#2d3748] rounded text-gray-300 font-bold tracking-[0.1em] text-xs uppercase transition-colors"
+              >
+                НАЗАД
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmCancel(true)}
+              className="flex-1 md:flex-none px-6 py-4 bg-[#1a202c] hover:bg-[#252d3d] border border-[#2d3748] rounded text-gray-300 font-bold tracking-[0.1em] text-[10px] md:text-xs uppercase transition-colors"
+            >
+              СКАСУВАТИ
+            </button>
+          )}
           <button 
             onClick={handleSaveCase} 
             disabled={isSaving}

@@ -2,58 +2,92 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FlaskConical, Activity, Droplet, ArrowLeft, RefreshCw } from 'lucide-react'
-import { listCases } from '@/lib/api'
-import { CaseItem } from '@/lib/types'
+import { Activity, Droplet, ArrowLeft, RefreshCw } from 'lucide-react'
+import { adjustBloodInventory, getBloodInventory, listCases } from '@/lib/api'
+import { BloodInventoryItem, CaseItem } from '@/lib/types'
 import BloodInventory from '@/components/BloodInventory'
 import { useToast } from '@/components/Toast'
+
+type BloodTypeData = { count: number; min: number; status: string }
+
+const BLOOD_MINIMUMS: Record<string, number> = {
+  'O+': 10,
+  'O-': 8,
+  'A+': 8,
+  'A-': 5,
+  'B+': 5,
+  'B-': 2,
+  'AB+': 2,
+  'AB-': 1,
+  LTOWB: 10,
+}
+
+function mapInventory(items: BloodInventoryItem[]): Record<string, BloodTypeData> {
+  return items.reduce<Record<string, BloodTypeData>>((acc, item) => {
+    const min = BLOOD_MINIMUMS[item.blood_type] ?? 1
+    const status = item.quantity < min * 0.2 ? 'critical' : item.quantity < min ? 'warning' : 'ok'
+    acc[item.blood_type] = {
+      count: item.quantity,
+      min,
+      status,
+    }
+    return acc
+  }, {})
+}
 
 export default function BloodPage() {
   const toast = useToast()
   const [cases, setCases] = useState<CaseItem[]>([])
+  const [inventory, setInventory] = useState<Record<string, BloodTypeData>>({})
+  const [mutatingType, setMutatingType] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  type BloodTypeData = { count: number; min: number; status: string }
-  const INIT_INVENTORY: Record<string, BloodTypeData> = {
-    'O+':    { count: 14, min: 10, status: 'ok' },
-    'O-':    { count: 3,  min: 8,  status: 'critical' },
-    'A+':    { count: 12, min: 8,  status: 'ok' },
-    'A-':    { count: 2,  min: 5,  status: 'warning' },
-    'B+':    { count: 8,  min: 5,  status: 'ok' },
-    'B-':    { count: 1,  min: 2,  status: 'warning' },
-    'AB+':   { count: 5,  min: 2,  status: 'ok' },
-    'AB-':   { count: 0,  min: 1,  status: 'critical' },
-    'LTOWB': { count: 4,  min: 10, status: 'critical' },
+  async function updateInventory(type: string, delta: number) {
+    try {
+      setMutatingType(type)
+      const updated = await adjustBloodInventory(type, {
+        delta,
+        reason: delta > 0 ? 'restock' : 'manual_use',
+      })
+      setInventory(prev => mapInventory([
+        ...Object.entries(prev)
+          .filter(([bloodType]) => bloodType !== type)
+          .map(([bloodType, data]) => ({ blood_type: bloodType, quantity: data.count })),
+        updated,
+      ]))
+      toast.success(`Запас ${type} оновлено`)
+    } catch (e) {
+      console.error('Failed to update blood inventory:', e)
+      toast.error(delta < 0 ? 'Не вдалося списати кров' : 'Не вдалося поповнити запас')
+    } finally {
+      setMutatingType(null)
+    }
   }
-  const [inventory, setInventory] = useState<Record<string, BloodTypeData>>(INIT_INVENTORY)
 
-  function updateInventory(type: string, delta: number) {
-    setInventory(prev => {
-      const entry = prev[type]
-      if (!entry) return prev
-      const newCount = Math.max(0, entry.count + delta)
-      const newStatus = newCount < entry.min * 0.2 ? 'critical' : newCount < entry.min ? 'warning' : 'ok'
-      return { ...prev, [type]: { ...entry, count: newCount, status: newStatus } }
-    })
-  }
-
-  function syncBlood() {
+  async function syncBlood() {
+    await load()
     toast.success('Дані крові синхронізовано')
   }
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const items = await listCases()
-        setCases(items)
-      } catch (e) {
-        console.error('Failed to load cases:', e)
-      } finally {
-        setLoading(false)
-      }
+  async function load() {
+    try {
+      setLoading(true)
+      setError(null)
+      const [caseItems, inventoryItems] = await Promise.all([listCases(), getBloodInventory()])
+      setCases(caseItems)
+      setInventory(mapInventory(inventoryItems))
+    } catch (e) {
+      console.error('Failed to load cases:', e)
+      setError('Помилка завантаження blood inventory або даних пацієнтів')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     load()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Patients who need blood mapping
   const patientsNeedingBlood = cases.filter(c => c.triage_code === 'IMMEDIATE' && ['ACTIVE', 'STABILIZING'].includes(c.case_status))
@@ -70,14 +104,20 @@ export default function BloodPage() {
             <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Інвентаризація запасів крові</p>
           </div>
         </div>
-        <button onClick={syncBlood} className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400 hover:text-white uppercase border border-[#262a30] px-3 py-1.5 rounded bg-[#1a1d24] transition-colors">
+        <button onClick={syncBlood} disabled={loading} className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400 hover:text-white uppercase border border-[#262a30] px-3 py-1.5 rounded bg-[#1a1d24] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <RefreshCw className="w-3 h-3" /> СИНХРОНІЗУВАТИ
         </button>
       </div>
+      {error && (
+        <div className="px-4 py-3 bg-red-900/20 border border-red-900/50 rounded-md text-red-400 text-xs font-bold uppercase tracking-widest flex items-center justify-between">
+          <span>⚠ {error}</span>
+          <button onClick={load} className="underline text-red-300 hover:text-white">Повторити</button>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inventory Column */}
         <div className="lg:col-span-2">
-          <BloodInventory inventory={inventory} onUpdate={updateInventory} />
+          <BloodInventory inventory={inventory} onUpdate={mutatingType ? undefined : updateInventory} />
         </div>
 
         {/* Patients Column */}

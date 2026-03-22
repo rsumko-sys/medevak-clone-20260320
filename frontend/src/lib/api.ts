@@ -1,4 +1,4 @@
-import { ApiEnvelope, AuditEntry, CaseDetails, CaseItem, TriageCategory } from './types'
+import { ApiEnvelope, AuditEntry, BloodInventoryItem, CaseDetails, CaseItem, TriageCategory } from './types'
 
 const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_BASE) return process.env.NEXT_PUBLIC_API_BASE
@@ -287,6 +287,14 @@ export async function transcribeAudio(file: File, whisperApiKey: string) {
 
 export async function getReference() {
   return apiGet<{ triage_codes: string[]; blood_codes: string[] }>('/reference')
+}
+
+export async function getBloodInventory() {
+  return apiGet<BloodInventoryItem[]>('/blood')
+}
+
+export async function adjustBloodInventory(bloodType: string, payload: { delta: number; reason: string; case_id?: string }) {
+  return apiPatch<BloodInventoryItem>(`/blood/${encodeURIComponent(bloodType)}`, payload)
 }
 
 export async function listDocuments() {

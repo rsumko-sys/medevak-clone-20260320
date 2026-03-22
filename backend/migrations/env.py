@@ -14,6 +14,7 @@ from alembic import context
 # Import Base and ALL models so they are registered with metadata
 from app.core.database import Base
 import app.models.cases  # noqa: F401
+import app.models.blood  # noqa: F401
 import app.models.audit  # noqa: F401
 import app.models.documents  # noqa: F401
 import app.models.user  # noqa: F401

@@ -219,6 +219,8 @@ class CaseCreate(BaseModel):
 
 
 class CaseUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     case_number: Optional[str] = Field(default=None, max_length=STR_SHORT)
     callsign: Optional[str] = Field(default=None, min_length=1, max_length=STR_SHORT)
     full_name: Optional[str] = Field(default=None, min_length=1, max_length=STR_MED)

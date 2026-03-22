@@ -55,6 +55,8 @@ async def create_case(
     body_data = body.model_dump(exclude={'injuries'}, exclude_unset=True)
     for field, value in body_data.items():
         setattr(case, field, value)
+    # Enforce unit isolation: cases always belong to the creator's unit
+    case.unit = user.get("unit", "")
     session.add(case)
 
     # Transactional batch: save injuries in the SAME commit
@@ -156,7 +158,7 @@ async def update_case(
     if case.unit != user_unit:
         raise HTTPException(status_code=403, detail="Unauthorized: Case is in different unit")
         
-    old_values = CaseUpdate.model_validate(case).model_dump()
+    old_values = {k: getattr(case, k, None) for k in CaseUpdate.model_fields}
     _apply_body_to_case(case, body)
     
     await log_audit(session, "cases", case_id, "update", user.get("sub"), old_values=old_values, new_values=body.model_dump(exclude_unset=True))

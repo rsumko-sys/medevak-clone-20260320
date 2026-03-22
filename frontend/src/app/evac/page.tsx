@@ -10,6 +10,8 @@ export default function EvacPage() {
   const [cases, setCases] = useState<CaseItem[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [confirmHandoff, setConfirmHandoff] = useState<string | null>(null)
 
   useEffect(() => {
     load()
@@ -18,10 +20,12 @@ export default function EvacPage() {
   async function load() {
     try {
       setLoading(true)
+      setError(null)
       const items = await listCases()
       setCases(items)
     } catch (e) {
       console.error('Failed to load cases:', e)
+      setError('Помилка завантаження даних євакуації')
     } finally {
       setLoading(false)
     }
@@ -66,6 +70,13 @@ export default function EvacPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-900/50 rounded-md text-red-400 text-xs font-bold uppercase tracking-widest flex items-center justify-between">
+          <span>⚠ {error}</span>
+          <button onClick={load} className="underline text-red-300 hover:text-white">Повторити</button>
+        </div>
+      )}
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -156,12 +167,29 @@ export default function EvacPage() {
                         </button>
                       )}
                       {c.case_status === 'IN_TRANSPORT' && (
-                        <button 
-                          onClick={() => handleStatusChange(c.id, 'HANDED_OFF')}
-                          className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-green-900/30 hover:bg-green-600 border border-green-800 rounded-sm text-green-400 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase"
-                        >
-                          <ArrowRightCircle className="w-3 h-3" /> ЗАВЕРШИТИ
-                        </button>
+                        confirmHandoff === c.id ? (
+                          <div className="flex gap-1 ml-auto">
+                            <button
+                              onClick={() => { handleStatusChange(c.id, 'HANDED_OFF'); setConfirmHandoff(null) }}
+                              className="flex items-center gap-1 px-2 py-1.5 bg-green-900 border border-green-600 rounded-sm text-green-300 text-xs font-bold uppercase"
+                            >
+                              <CheckCircle className="w-3 h-3" /> ПІДТВЕРДИТИ
+                            </button>
+                            <button
+                              onClick={() => setConfirmHandoff(null)}
+                              className="px-2 py-1.5 border border-[#262a30] bg-[#1a1d24] rounded-sm text-gray-400 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => setConfirmHandoff(c.id)}
+                            className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-green-900/30 hover:bg-green-600 border border-green-800 rounded-sm text-green-400 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase"
+                          >
+                            <ArrowRightCircle className="w-3 h-3" /> ЗАВЕРШИТИ
+                          </button>
+                        )
                       )}
                       {c.case_status === 'HANDED_OFF' && (
                         <span className="inline-flex items-center gap-2 ml-auto px-3 py-1.5 opacity-50 text-xs font-bold tracking-widest uppercase text-gray-500">

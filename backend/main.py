@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI):
         from app.core.database import engine, Base  # noqa: F401 — triggers model registration
         # Import all models so Base.metadata knows about them
         import app.models.user  # noqa: F401
+        import app.models.blood  # noqa: F401
         import app.models.cases  # noqa: F401
         import app.models.personnel  # noqa: F401
         import app.models.injuries  # noqa: F401

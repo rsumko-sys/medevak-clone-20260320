@@ -13,6 +13,7 @@ from app.core.database import engine, Base
 
 # Import all models to ensure they are registered with Base.metadata
 from app.models.personnel import ServiceMember
+from app.models.blood import BloodInventory, BloodTransaction
 from app.models.cases import Case
 from app.models.injuries import Injury
 from app.models.medications import MedicationAdministration

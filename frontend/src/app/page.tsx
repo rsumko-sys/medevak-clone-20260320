@@ -16,7 +16,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
         
         {/* Field Dashboard Card */}
-        <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
+        <div className="bg-panel border border-borderContent rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-red-900/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-red-500/30" />
           
           <div className="p-8 flex-1">
@@ -52,7 +52,7 @@ export default function HomePage() {
         </div>
 
         {/* Command Center Card */}
-        <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
+        <div className="bg-panel border border-borderContent rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-gray-800/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-gray-600/30" />
           
           <div className="p-8 flex-1">
@@ -88,7 +88,7 @@ export default function HomePage() {
         </div>
 
         {/* Field Contour Card */}
-        <div className="bg-[#181a1f] border border-[#2b2b2b] rounded-md overflow-hidden flex flex-col relative group">
+        <div className="bg-panel border border-borderContent rounded-md overflow-hidden flex flex-col relative group">
           <div className="absolute top-0 right-0 w-16 h-16 bg-orange-900/20 transform translate-x-8 -translate-y-8 rotate-45 border-l border-b border-orange-500/30" />
           
           <div className="p-8 flex-1">

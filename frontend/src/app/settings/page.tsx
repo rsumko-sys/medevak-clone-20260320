@@ -185,7 +185,7 @@ export default function SettingsPage() {
       <div className="sticky bottom-0 pt-6 pb-2 pb-safe-area">
         <button 
           onClick={handleSave}
-          className="flex items-center gap-3 px-8 py-4 bg-red-900 hover:bg-red-800 border border-red-700 text-white font-bold tracking-widest text-xs uppercase transition-colors shadow-lg"
+          className="flex items-center gap-3 px-8 py-4 bg-blue-700 hover:bg-blue-600 border-none text-white font-bold tracking-widest text-xs uppercase transition-colors shadow-lg"
         >
           <Save className="w-4 h-4" /> ЗБЕРЕГТИ НАЛАШТУВАННЯ
         </button>
