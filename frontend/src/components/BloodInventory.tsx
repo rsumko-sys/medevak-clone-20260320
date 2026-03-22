@@ -31,12 +31,12 @@ export default function BloodInventory({ inventory, onUpdate }: BloodInventoryPr
 
           return (
             <div key={type} className={`p-4 rounded-xl border transition-all hover:shadow-lg ${sc}`}>
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold text-gray-400 tracking-wider truncate pr-1">{type}</span>
+              <div className="flex justify-between items-center mb-3">
+                <span className={`text-xl font-mono font-bold tracking-tight ${nc}`}>{type}</span>
                 {data.status === 'critical' && <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />}
               </div>
               <div className="flex items-end gap-2 mb-2">
-                <span className={`text-2xl font-bold ${nc}`}>{data.count}</span>
+                <span className={`text-3xl font-bold font-mono ${nc}`}>{data.count}</span>
                 <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">од.</span>
               </div>
               <div className="w-full bg-[#0f1217] rounded-full h-1.5 overflow-hidden mb-3">

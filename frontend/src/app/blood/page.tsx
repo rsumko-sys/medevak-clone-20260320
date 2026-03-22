@@ -15,15 +15,15 @@ export default function BloodPage() {
 
   type BloodTypeData = { count: number; min: number; status: string }
   const INIT_INVENTORY: Record<string, BloodTypeData> = {
-    'O+ (O(I) Rh+)':      { count: 14, min: 10, status: 'ok' },
-    'O- (O(I) Rh-)':      { count: 3,  min: 8,  status: 'critical' },
-    'A+ (A(II) Rh+)':     { count: 12, min: 8,  status: 'ok' },
-    'A- (A(II) Rh-)':     { count: 2,  min: 5,  status: 'warning' },
-    'B+ (B(III) Rh+)':    { count: 8,  min: 5,  status: 'ok' },
-    'B- (B(III) Rh-)':    { count: 1,  min: 2,  status: 'warning' },
-    'AB+ (AB(IV) Rh+)':   { count: 5,  min: 2,  status: 'ok' },
-    'AB- (AB(IV) Rh-)':   { count: 0,  min: 1,  status: 'critical' },
-    'Whole Blood LTOWB':  { count: 4,  min: 10, status: 'critical' },
+    'O+':    { count: 14, min: 10, status: 'ok' },
+    'O-':    { count: 3,  min: 8,  status: 'critical' },
+    'A+':    { count: 12, min: 8,  status: 'ok' },
+    'A-':    { count: 2,  min: 5,  status: 'warning' },
+    'B+':    { count: 8,  min: 5,  status: 'ok' },
+    'B-':    { count: 1,  min: 2,  status: 'warning' },
+    'AB+':   { count: 5,  min: 2,  status: 'ok' },
+    'AB-':   { count: 0,  min: 1,  status: 'critical' },
+    'LTOWB': { count: 4,  min: 10, status: 'critical' },
   }
   const [inventory, setInventory] = useState<Record<string, BloodTypeData>>(INIT_INVENTORY)
 
