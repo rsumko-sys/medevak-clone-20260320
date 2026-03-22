@@ -5,6 +5,25 @@ from sqlalchemy import select
 
 from app.models.personnel import ServiceMember
 from app.models.sync_queue import SyncQueue
+from app.models.cases import Case
+from app.models.evacuation import EvacuationRecord
+from app.models.march import MarchAssessment
+from app.models.injuries import Injury
+from app.models.vitals import VitalsObservation
+from app.models.procedures import Procedure
+from app.models.medications import MedicationAdministration
+
+# Maps sync entity_type string → (SQLAlchemy model, version column name)
+_MODEL_REGISTRY: Dict[str, tuple] = {
+    "service_member": (ServiceMember,        "version_id"),
+    "case":           (Case,                 "server_version"),
+    "evacuation":     (EvacuationRecord,     "version_id"),
+    "march":          (MarchAssessment,      "version_id"),
+    "injury":         (Injury,               "version_id"),
+    "vitals":         (VitalsObservation,    "version_id"),
+    "procedure":      (Procedure,            "version_id"),
+    "medication":     (MedicationAdministration, "version_id"),
+}
 
 class SyncService:
     def __init__(self, session: AsyncSession):
@@ -15,14 +34,10 @@ class SyncService:
         Reconcile a remote entity change with the local state.
         Uses version-based conflict detection and field-level merging.
         """
-        model_map: Dict[str, Any] = {
-            "service_member": ServiceMember,
-            # Add other models as needed
-        }
-        
-        model = model_map.get(entity_type)
-        if not model:
+        entry = _MODEL_REGISTRY.get(entity_type)
+        if not entry:
             return False
+        model, version_field = entry
             
         entity_id = remote_data.get("id")
         if not entity_id:
@@ -40,9 +55,9 @@ class SyncService:
             await self.session.commit()
             return True
             
-        # 2. Conflict Detection
-        remote_version = remote_data.get("version_id", 0)
-        local_version = getattr(local_entity, "version_id", 0)
+        # 2. Conflict Detection — use the correct version field for each model
+        remote_version = remote_data.get(version_field, 0)
+        local_version = getattr(local_entity, version_field, 0)
         
         if remote_version <= local_version:
             # Remote is stale - ignore
@@ -71,7 +86,7 @@ class SyncService:
                     # Basic policy: overwrite if remote is definitely newer
                     setattr(local_entity, key, value)
                     
-        local_entity.version_id = remote_version
+        setattr(local_entity, version_field, remote_version)
         local_entity.updated_at = datetime.now(timezone.utc)
         
         await self.session.commit()
