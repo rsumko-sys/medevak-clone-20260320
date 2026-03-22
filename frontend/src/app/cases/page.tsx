@@ -71,7 +71,7 @@ export default function CasesPage() {
       <header className="border-b border-[#262a30] bg-[#101317]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none">
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>

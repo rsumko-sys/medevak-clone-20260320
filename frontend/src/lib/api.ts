@@ -125,7 +125,10 @@ async function apiGet<T>(path: string): Promise<T> {
   let res = await fetch(`${API_BASE}${path}`, { cache: 'no-store', headers: buildAuthHeaders() })
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
-    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    if (!refreshed) {
+      if (typeof window !== 'undefined') window.location.href = '/login'
+      throw new Error('401 Session expired — please log in again')
+    }
     res = await fetch(`${API_BASE}${path}`, { cache: 'no-store', headers: buildAuthHeaders() })
   }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -141,7 +144,10 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   })
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
-    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    if (!refreshed) {
+      if (typeof window !== 'undefined') window.location.href = '/login'
+      throw new Error('401 Session expired — please log in again')
+    }
     res = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
       headers: buildAuthHeaders(),
@@ -161,7 +167,10 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   })
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
-    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    if (!refreshed) {
+      if (typeof window !== 'undefined') window.location.href = '/login'
+      throw new Error('401 Session expired — please log in again')
+    }
     res = await fetch(`${API_BASE}${path}`, {
       method: 'PATCH',
       headers: buildAuthHeaders(),

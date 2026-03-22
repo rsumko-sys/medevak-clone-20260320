@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useToast } from '@/components/Toast'
 
 interface TriageSuggestion {
   case_id: string
@@ -20,6 +21,7 @@ interface TriageSuggestion {
 }
 
 export default function AiTriagePage() {
+  const toast = useToast()
   const [cases, setCases] = useState<TriageSuggestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -169,13 +171,13 @@ export default function AiTriagePage() {
 
             <div className="mt-4 flex gap-2">
               <button
-                onClick={() => alert('Рекомендацію зафіксовано в цьому режимі перегляду.')}
+                onClick={() => toast.success('Рекомендацію зафіксовано в цьому режимі перегляду.')}
                 className="wolf-btn-green"
               >
                 ПРИЙНЯТИ РЕКОМЕНДАЦІЮ
               </button>
               <button
-                onClick={() => alert('Детальний клінічний розбір буде доступний у наступному релізі.')}
+                onClick={() => toast.info('Детальний клінічний розбір буде доступний у наступному релізі.')}
                 className="wolf-btn"
               >
                 ПЕРЕГЛЯНУТИ ДЕТАЛІ

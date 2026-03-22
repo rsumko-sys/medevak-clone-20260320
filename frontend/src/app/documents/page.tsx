@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { FileText, UploadCloud, FileImage, File, Trash2, ShieldCheck, ArrowLeft } from 'lucide-react'
 import { listDocuments, uploadDocument, listCases } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
+import { useToast } from '@/components/Toast'
 
 export default function DocumentsPage() {
+  const toast = useToast()
   const [documents, setDocuments] = useState<any[]>([])
   const [cases, setCases] = useState<CaseItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,10 +53,10 @@ export default function DocumentsPage() {
       await load()
       // Reset form
       if (fileInputRef.current) fileInputRef.current.value = ''
-      alert('Документ успішно завантажено в зашифроване сховище!')
+      toast.success('Документ успішно завантажено в зашифроване сховище!')
     } catch (err) {
       console.error(err)
-      alert('Помилка завантаження документу.')
+      toast.error('Помилка завантаження документу.')
     } finally {
       setUploading(false)
     }
@@ -68,7 +70,7 @@ export default function DocumentsPage() {
     <div className="flex-1 p-6 overflow-y-auto">
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
@@ -182,13 +184,13 @@ export default function DocumentsPage() {
                     
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => alert('Перегляд файлу у вбудованому вікні буде додано в наступному релізі.')}
+                        onClick={() => toast.info('Перегляд файлу у вбудованому вікні буде додано в наступному релізі.')}
                         className="p-2 bg-blue-900/20 text-blue-400 rounded hover:bg-blue-600 hover:text-white transition-colors"
                       >
                         <File className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => alert('Видалення документів буде доступне після додавання журналу відновлення.')}
+                        onClick={() => toast.info('Видалення документів буде доступне після додавання журналу відновлення.')}
                         className="p-2 bg-red-900/20 text-red-400 rounded hover:bg-red-600 hover:text-white transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />

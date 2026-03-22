@@ -150,7 +150,7 @@ export default function FieldPage() {
 
       {/* ── HEADER ── */}
       <div className="border-b border-[#1e222a] px-6 py-4 flex items-center gap-4 sticky top-0 z-10 bg-[#0c0e11]">
-        <Link href="/" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+        <Link href="/" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none">
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>

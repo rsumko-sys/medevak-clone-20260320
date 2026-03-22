@@ -50,7 +50,7 @@ export default function SettingsPage() {
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <header className="mb-8">
         <div className="flex items-center gap-3 mb-3">
-          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none">
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
