@@ -8,7 +8,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="text-center mb-16 space-y-2">
         <p className="wolf-title text-gray-500 tracking-[0.3em]">АЗОВ</p>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-widest text-white">МЕДИЧНА СЛУЖБА</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-widest text-white">МЕДИЧНА СЛУЖБА</h1>
         <p className="wolf-title text-gray-400 tracking-[0.3em]">CCRM</p>
       </div>
 
@@ -26,7 +26,7 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-[10px] text-red-500 uppercase tracking-widest font-bold mb-1">ПОЛЬОВИЙ РЕЖИМ</div>
-                <h2 className="text-2xl font-bold tracking-widest text-white leading-tight">БОЙОВИЙ<br/>ДАШБОРД</h2>
+                <h2 className="text-xl font-bold tracking-widest text-white leading-tight">БОЙОВИЙ<br/>ДАШБОРД</h2>
               </div>
             </div>
 
@@ -62,7 +62,7 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">ШТАБНИЙ РЕЖИМ</div>
-                <h2 className="text-2xl font-bold tracking-widest text-white leading-tight">КОМАНДНИЙ<br/>ЦЕНТР</h2>
+                <h2 className="text-xl font-bold tracking-widest text-white leading-tight">КОМАНДНИЙ<br/>ЦЕНТР</h2>
               </div>
             </div>
 
@@ -98,7 +98,7 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-[10px] text-orange-500 uppercase tracking-widest font-bold mb-1">ПОЛЬОВИЙ КОНТУР</div>
-                <h2 className="text-2xl font-bold tracking-widest text-white leading-tight">СКИДИ<br/>ПОЗИЦІЇ</h2>
+                <h2 className="text-xl font-bold tracking-widest text-white leading-tight">СКИДИ<br/>ПОЗИЦІЇ</h2>
               </div>
             </div>
 
