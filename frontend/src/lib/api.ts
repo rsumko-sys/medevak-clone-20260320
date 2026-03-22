@@ -13,6 +13,90 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase()
 
+// ── Auth token management ──────────────────────────────────────────────────
+const TOKEN_KEY = 'medevak_access_token'
+const REFRESH_KEY = 'medevak_refresh_token'
+
+function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return (
+    localStorage.getItem(TOKEN_KEY) ||
+    localStorage.getItem('syncAuthToken') ||
+    sessionStorage.getItem('syncAuthToken') ||
+    null
+  )
+}
+
+function buildAuthHeaders(): Record<string, string> {
+  const token = getAccessToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`
+  }
+  return headers
+}
+
+async function tryRefreshToken(): Promise<boolean> {
+  if (typeof window === 'undefined') return false
+  const refresh = localStorage.getItem(REFRESH_KEY)
+  if (!refresh) return false
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refresh }),
+    })
+    if (!res.ok) return false
+    const json = await res.json()
+    const newToken: string | undefined = json.data?.access_token
+    if (newToken) {
+      localStorage.setItem(TOKEN_KEY, newToken)
+      return true
+    }
+    return false
+  } catch {
+    return false
+  }
+}
+
+function buildUploadAuthHeaders(): Record<string, string> {
+  const token = getAccessToken()
+  if (!token) return {}
+  return { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` }
+}
+
+// Public auth helpers (used by login page, navbar, etc.)
+export async function login(email: string, password: string): Promise<{ id: string; email: string; role: string }> {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any)?.detail || `${res.status} ${res.statusText}`)
+  }
+  const json = await res.json()
+  const { access_token, refresh_token, user } = json.data
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TOKEN_KEY, access_token)
+    if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token)
+  }
+  return user
+}
+
+export function logout(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REFRESH_KEY)
+  }
+}
+
+export function isAuthenticated(): boolean {
+  return !!getAccessToken()
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 export type VitalsPayload = {
   heart_rate?: number | string
   respiratory_rate?: number | string
@@ -38,29 +122,52 @@ export type SecurityPolicySettings = {
 }
 
 async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { cache: 'no-store' })
+  let res = await fetch(`${API_BASE}${path}`, { cache: 'no-store', headers: buildAuthHeaders() })
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken()
+    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    res = await fetch(`${API_BASE}${path}`, { cache: 'no-store', headers: buildAuthHeaders() })
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   const json: ApiEnvelope<T> = await res.json()
   return json.data
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  let res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: buildAuthHeaders(),
     body: JSON.stringify(body),
   })
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken()
+    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(body),
+    })
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   const json: ApiEnvelope<T> = await res.json()
   return json.data
 }
 
 async function apiPatch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  let res = await fetch(`${API_BASE}${path}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: buildAuthHeaders(),
     body: JSON.stringify(body),
   })
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken()
+    if (!refreshed) throw new Error('401 Session expired — please log in again')
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'PATCH',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(body),
+    })
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   const json: ApiEnvelope<T> = await res.json()
   return json.data
@@ -170,6 +277,7 @@ export async function uploadDocument(caseId: string, documentType: string, file:
 
   const res = await fetch(`${API_BASE}/documents/upload`, {
     method: 'POST',
+    headers: buildUploadAuthHeaders(),
     body: formData,
   })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)

@@ -18,8 +18,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    setWhisperApiKey(window.sessionStorage.getItem('whisperApiKey') || '')
-    setSyncAuthToken(window.sessionStorage.getItem('syncAuthToken') || '')
+    setWhisperApiKey(window.localStorage.getItem('whisperApiKey') || '')
+    setSyncAuthToken(window.localStorage.getItem('syncAuthToken') || '')
     setCachePassphrase(window.sessionStorage.getItem('cachePassphrase') || '')
 
     getSecurityPolicySettings()
@@ -31,8 +31,8 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('whisperApiKey', whisperApiKey.trim())
-      window.sessionStorage.setItem('syncAuthToken', syncAuthToken.trim())
+      window.localStorage.setItem('whisperApiKey', whisperApiKey.trim())
+      window.localStorage.setItem('syncAuthToken', syncAuthToken.trim())
       window.sessionStorage.setItem('cachePassphrase', cachePassphrase.trim())
     }
     toast.success('Налаштування збережено')
