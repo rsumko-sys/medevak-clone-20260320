@@ -69,6 +69,7 @@ try:
     # Access token
     token = create_access_token({'sub': 'ua_medic_1', 'role': 'medic', 'unit': 'AZOV'})
     d = decode_token(token)
+    assert d is not None, "access token decode returned None"
     checks = [
         ("access token sub",   d.get('sub') == 'ua_medic_1'),
         ("access token type",  d.get('type') == 'access'),
@@ -77,6 +78,7 @@ try:
     # Refresh token
     rtoken = create_refresh_token({'sub': 'ua_medic_1'})
     rd = decode_token(rtoken)
+    assert rd is not None, "refresh token decode returned None"
     checks += [
         ("refresh token type", rd.get('type') == 'refresh'),
     ]
@@ -146,8 +148,9 @@ for name, module, cls in models_to_check:
 # ── 6. API router ──
 sep("6. API ROUTER")
 try:
+    from fastapi.routing import APIRoute
     from app.api.router import api_router
-    routes = [r.path for r in api_router.routes]
+    routes = [r.path for r in api_router.routes if isinstance(r, APIRoute)]
     expected = ['/cases', '/evacuation', '/march', '/audit', '/sync', '/auth', '/documents']
     for ep in expected:
         found = any(ep in r for r in routes)
