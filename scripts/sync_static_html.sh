@@ -10,6 +10,9 @@ FILES=(
   "CCRM_AZOV.html"
   "CCRM_AZOV_OFFLINE.html"
   "CCRM_AZOV_OFFLINE_TEST.html"
+  "CCRM_ULF.html"
+  "CCRM_ULF_OFFLINE.html"
+  "CCRM_ULF_OFFLINE_TEST.html"
   "medevak_os.html"
 )
 

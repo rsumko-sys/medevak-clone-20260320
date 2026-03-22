@@ -12,19 +12,19 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Import Base and ALL models so they are registered with metadata
-from backend.app.core.database import Base
-import backend.app.models.cases  # noqa: F401
-import backend.app.models.audit  # noqa: F401
-import backend.app.models.documents  # noqa: F401
-import backend.app.models.user  # noqa: F401
-import backend.app.models.sync_queue  # noqa: F401
-import backend.app.models.march  # noqa: F401
-import backend.app.models.injuries  # noqa: F401
-import backend.app.models.procedures  # noqa: F401
-import backend.app.models.medications  # noqa: F401
-import backend.app.models.vitals  # noqa: F401
-import backend.app.models.evacuation  # noqa: F401
-import backend.app.models.events  # noqa: F401
+from app.core.database import Base
+import app.models.cases  # noqa: F401
+import app.models.audit  # noqa: F401
+import app.models.documents  # noqa: F401
+import app.models.user  # noqa: F401
+import app.models.sync_queue  # noqa: F401
+import app.models.march  # noqa: F401
+import app.models.injuries  # noqa: F401
+import app.models.procedures  # noqa: F401
+import app.models.medications  # noqa: F401
+import app.models.vitals  # noqa: F401
+import app.models.evacuation  # noqa: F401
+import app.models.events  # noqa: F401
 
 config = context.config
 

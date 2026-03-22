@@ -1,4 +1,5 @@
 """Cases router."""
+import asyncio
 import logging
 import uuid
 from datetime import datetime
@@ -28,6 +29,7 @@ from app.models.events import Event
 
 # Schemas
 from app.schemas.unified import CaseCreate, CaseUpdate, CaseResponse, CaseDetailResponse, InjuryCreate
+from app.core.discord import notify_new_case
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -71,7 +73,10 @@ async def create_case(
     
     await session.commit()
     await session.refresh(case)
-    
+
+    # Fire-and-forget Discord notification (never blocks or raises)
+    asyncio.create_task(notify_new_case(case))
+
     return envelope(CaseResponse.model_validate(case).model_dump(mode='json'), request_id=request_id)
 
 

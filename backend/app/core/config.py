@@ -55,3 +55,7 @@ STRUCTURED_LOGGING = os.getenv("STRUCTURED_LOGGING", "true").lower() == "true"
 PRIVATE_NETWORK_ONLY = os.getenv("PRIVATE_NETWORK_ONLY", "false").lower() == "true"
 # When disabled, incoming GPS coordinates in case payloads are rejected.
 ALLOW_GPS = os.getenv("ALLOW_GPS", "false").lower() == "true"
+
+# Discord webhook for operational notifications (optional)
+# Set env var DISCORD_WEBHOOK_URL to enable. Leave empty to disable silently.
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
