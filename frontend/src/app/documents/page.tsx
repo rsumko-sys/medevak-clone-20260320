@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { FileText, UploadCloud, FileImage, File, Trash2, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { FileText, UploadCloud, FileImage, File, Trash2, ShieldCheck, ArrowLeft } from 'lucide-react'
 import { listDocuments, uploadDocument, listCases } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
 
@@ -66,9 +67,14 @@ export default function DocumentsPage() {
   return (
     <div className="flex-1 p-6 overflow-y-auto">
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
           <h1 className="text-xl font-bold tracking-widest text-white uppercase mb-1">ЗАХИЩЕНИЙ АРХІВ ДОКУМЕНТІВ</h1>
           <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">E2E Шифрування Фото та Сканів</p>
+          </div>
         </div>
       </div>
 

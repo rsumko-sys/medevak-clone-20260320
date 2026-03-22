@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { listCases, getCase } from '@/lib/api'
 import { CaseDetails, CaseItem } from '@/lib/types'
 
@@ -69,9 +70,14 @@ export default function CasesPage() {
     <div className="flex-1 flex flex-col">
       <header className="border-b border-[#262a30] bg-[#101317]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
+          <div className="flex items-center gap-3">
+            <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div>
             <h1 className="wolf-h1">МЕДИЧНІ КЕЙСИ</h1>
             <p className="wolf-title">управління пацієнтами та протоколами</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Link href="/ai-triage" className="wolf-btn">AI ТРІАЖ</Link>

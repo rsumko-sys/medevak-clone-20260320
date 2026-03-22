@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { addMedication, addObservation, addProcedure, getCase, listCases } from '@/lib/api'
 import { CaseDetails, CaseItem } from '@/lib/types'
-import { ClipboardCheck, Activity, Pill, Stethoscope, RefreshCw, AlertCircle, Plus } from 'lucide-react'
+import Link from 'next/link'
+import { ClipboardCheck, Activity, Pill, Stethoscope, RefreshCw, AlertCircle, Plus, ArrowLeft } from 'lucide-react'
 
 export default function ProtocolsPage() {
   const [cases, setCases] = useState<CaseItem[]>([])
@@ -105,9 +106,14 @@ export default function ProtocolsPage() {
     <div className="flex-1 p-6 overflow-y-auto">
       {/* Top Header Section */}
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
           <h1 className="text-xl font-bold tracking-widest text-white uppercase mb-1">КЛІНІЧНІ ПРОТОКОЛИ</h1>
           <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">MARCH • TCCC • АДМІНІСТРУВАННЯ</p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button onClick={() => loadDetails(selectedCaseId)} className="p-2 border border-[#262a30] bg-[#1a1d24] rounded-md text-gray-400 hover:text-white transition-colors">

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PlaneTakeoff, ShieldAlert, ArrowRightCircle, CheckCircle, Clock } from 'lucide-react'
+import Link from 'next/link'
+import { PlaneTakeoff, ShieldAlert, ArrowRightCircle, CheckCircle, Clock, ArrowLeft } from 'lucide-react'
 import { listCases, updateCase } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
 
@@ -50,9 +51,14 @@ export default function EvacPage() {
     <div className="flex-1 p-6 overflow-y-auto">
       {/* Top Header Section */}
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
           <h1 className="text-xl font-bold tracking-widest text-white uppercase mb-1">МЕДИЧНА ЄВАКУАЦІЯ</h1>
           <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">9-LINE / ZMIST ТРАКІНГ</p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button onClick={load} className="px-4 py-2 border border-[#262a30] bg-[#1a1d24] rounded-md text-xs font-bold tracking-widest text-gray-400 hover:text-white uppercase transition-colors">

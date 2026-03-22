@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { HardDriveUpload, Wifi, WifiOff, Server, Clock, Database, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
+import { HardDriveUpload, Wifi, WifiOff, Server, Clock, Database, AlertCircle, ArrowLeft } from 'lucide-react'
 import { getSyncStats, getSyncQueue } from '@/lib/api'
 
 export default function SyncPage() {
@@ -38,9 +39,14 @@ export default function SyncPage() {
   return (
     <div className="flex-1 p-6 overflow-y-auto">
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
           <h1 className="text-xl font-bold tracking-widest text-white uppercase mb-1">ЦЕНТР СИНХРОНІЗАЦІЇ</h1>
           <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Локальна БД ↔ Хмарний Сервер</p>
+          </div>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2 border rounded-md text-xs font-bold tracking-widest uppercase ${online ? 'border-green-900/50 bg-green-900/20 text-green-500' : 'border-red-900/50 bg-red-900/20 text-red-500'}`}>
           {online ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}

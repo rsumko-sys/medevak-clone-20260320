@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FlaskConical, Activity, Droplet } from 'lucide-react'
+import Link from 'next/link'
+import { FlaskConical, Activity, Droplet, ArrowLeft } from 'lucide-react'
 import { listCases } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
 import BloodInventory from '@/components/BloodInventory'
@@ -42,6 +43,15 @@ export default function BloodPage() {
 
   return (
     <div className="flex-1 p-6 space-y-6">
+      <div className="flex items-center gap-3 mb-2">
+        <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+        </Link>
+        <div>
+          <h1 className="text-xl font-bold tracking-widest text-white uppercase">КРОВ</h1>
+          <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Інвентаризація запасів крові</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inventory Column */}
         <div className="lg:col-span-2">

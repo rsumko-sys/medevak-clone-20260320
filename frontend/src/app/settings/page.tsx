@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Save, Shield, Database, Bell, User } from 'lucide-react'
+import Link from 'next/link'
+import { Save, Shield, Database, Bell, User, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import { getSecurityPolicySettings, type SecurityPolicySettings } from '@/lib/api'
 
@@ -48,6 +49,11 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <header className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </div>
         <h1 className="wolf-h1">НАЛАШТУВАННЯ СИСТЕМИ</h1>
         <p className="wolf-title text-gray-500">конфігурація терміналу та безпеки</p>
       </header>

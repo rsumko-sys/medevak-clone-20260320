@@ -1,6 +1,7 @@
 'use client'
 
-import { Package, AlertCircle, PlusCircle, MinusCircle, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
+import { Package, AlertCircle, PlusCircle, MinusCircle, RefreshCw, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useToast } from '@/components/Toast'
 
@@ -60,9 +61,14 @@ export default function SuppliesPage() {
   return (
     <div className="flex-1 p-6 overflow-y-auto">
       <div className="flex justify-between items-start mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
           <h1 className="text-xl font-bold tracking-widest text-white uppercase mb-1">МЕДИЧНІ ЗАПАСИ</h1>
           <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Інвентаризація ROLE-1 / СТАБПУНКТ</p>
+          </div>
         </div>
       </div>
 
