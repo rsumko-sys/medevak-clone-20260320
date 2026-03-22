@@ -79,20 +79,22 @@ async def lifespan(app: FastAPI):
         import app.models.revoked_token  # noqa: F401
         from app.core.config import DATABASE_URL as _DB_URL
         if _DB_URL.startswith("postgresql"):
-            # PostgreSQL (Neon/prod): apply all pending migrations via Alembic.
-            # This is the only correct approach — create_all bypasses migration history.
-            import asyncio
-            from alembic.config import Config as AlembicConfig
-            from alembic import command as alembic_command
+            # On Vercel (serverless) there is no release step — run alembic in lifespan.
+            # On nixpacks/Procfile platforms it already runs before uvicorn starts, so skip.
+            if os.getenv("VERCEL"):
+                import asyncio
+                from alembic.config import Config as AlembicConfig
+                from alembic import command as alembic_command
 
-            def _run_alembic_upgrade() -> None:
-                _ini = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alembic.ini")
-                _scripts = os.path.join(os.path.dirname(os.path.abspath(__file__)), "migrations")
-                cfg = AlembicConfig(_ini)
-                cfg.set_main_option("script_location", _scripts)
-                alembic_command.upgrade(cfg, "head")
+                def _run_alembic_upgrade() -> None:
+                    _ini = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alembic.ini")
+                    _scripts = os.path.join(os.path.dirname(os.path.abspath(__file__)), "migrations")
+                    cfg = AlembicConfig(_ini)
+                    cfg.set_main_option("script_location", _scripts)
+                    alembic_command.upgrade(cfg, "head")
 
-            await asyncio.to_thread(_run_alembic_upgrade)
+                await asyncio.to_thread(_run_alembic_upgrade)
+            # else: nixpacks.toml / Procfile already ran 'alembic upgrade head' before uvicorn.
         else:
             # SQLite (local dev / fallback): create tables directly — fast, no history needed.
             async with engine.begin() as conn:

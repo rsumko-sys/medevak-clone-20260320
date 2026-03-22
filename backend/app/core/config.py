@@ -30,7 +30,7 @@ else:
         raise RuntimeError("SECRET_KEY is not set properly — set a strong SECRET_KEY environment variable")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 5  # Short window — mitigates stolen token risk without Redis JTI blacklist
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 DEV_AUTH_BYPASS = os.getenv("DEV_AUTH_BYPASS", "false").lower() == "true"
 if DEV_AUTH_BYPASS and ENV != "development":
