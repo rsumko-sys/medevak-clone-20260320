@@ -35,10 +35,12 @@ export default function EvacPage() {
     if (updating) return
     setUpdating(caseId)
     try {
-      await updateCase(caseId, { evac_status: newStatus } as any)
+      setError(null)
+      await updateCase(caseId, { case_status: newStatus } as any)
       await load()
     } catch (e) {
       console.error('Failed to update evac status', e)
+      setError('Помилка оновлення статусу евакуації')
     } finally {
       setUpdating(null)
     }

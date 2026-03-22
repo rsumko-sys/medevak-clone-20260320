@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Settings, LogOut } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { ArrowLeft, House, Settings, LogOut } from 'lucide-react'
 import { logout } from '@/lib/api'
 
 export default function Topbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const [confirmLogout, setConfirmLogout] = useState(false)
 
   const currentDate = new Date().toLocaleDateString('uk-UA', {
@@ -22,11 +23,35 @@ export default function Topbar() {
     router.replace('/login')
   }
 
+  const handleBack = () => {
+    if (pathname === '/command' || pathname === '/dashboard') {
+      router.replace('/')
+      return
+    }
+    router.back()
+  }
+
   return (
     <header className="h-16 shrink-0 border-b border-borderContent bg-background flex items-center justify-between px-6 sticky top-0 z-10">
-      <div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleBack}
+          className="p-2 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none"
+          title="Назад"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <Link
+          href="/dashboard"
+          className="p-2 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none"
+          title="На головну"
+        >
+          <House className="w-4 h-4" />
+        </Link>
+        <div>
         <h2 className="text-sm font-bold tracking-widest text-white uppercase">МЕДЕВАК СИСТЕМА</h2>
         <p className="hidden md:block text-xs text-gray-500 font-mono tracking-widest uppercase">{currentDate}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -55,10 +80,11 @@ export default function Topbar() {
         ) : (
           <button
             onClick={() => setConfirmLogout(true)}
-            className="p-2 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-red-400 hover:bg-red-900/20 hover:border-red-900/50 transition-colors outline-none focus:outline-none"
+            className="inline-flex items-center gap-2 p-2 md:px-3 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-red-400 hover:bg-red-900/20 hover:border-red-900/50 transition-colors outline-none focus:outline-none"
             title="Вийти"
           >
             <LogOut className="w-4 h-4" />
+            <span className="hidden md:inline text-[10px] font-bold tracking-widest uppercase">Вихід</span>
           </button>
         )}
       </div>

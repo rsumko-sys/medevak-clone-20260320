@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Shield, LogIn } from 'lucide-react'
 import { login } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,7 +19,9 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email.trim(), password)
-      router.replace('/dashboard')
+      const from = searchParams.get('from')
+      const target = from && from !== '/login' ? from : '/dashboard'
+      router.replace(target)
     } catch (err: any) {
       setError(err?.message || 'Помилка авторизації')
     } finally {

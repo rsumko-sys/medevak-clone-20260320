@@ -104,6 +104,8 @@ export function logout(): void {
     }
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_KEY)
+    localStorage.removeItem('syncAuthToken')
+    sessionStorage.removeItem('syncAuthToken')
     document.cookie = 'medevak_auth=; path=/; max-age=0; SameSite=Strict'
   }
 }
