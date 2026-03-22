@@ -143,17 +143,20 @@ class MarchResponse(MarchCreate):
 
 # ── EVENTS ───────────────────────────────────────────────────────────────
 class EventCreate(BaseModel):
-    event_type: str
-    event_time: Optional[datetime] = None
-    actor_id: Optional[str] = None
+    type: str
+    entity_type: str = "case"
     payload: Optional[Any] = None
 
 
-class EventResponse(EventCreate):
+class EventResponse(BaseModel):
     id: str
-    case_id: str
-    recorded_at: datetime
-    voided: bool
+    type: str
+    entity_type: str
+    entity_id: str
+    payload: Optional[Any] = None
+    unit: str
+    created_by: Optional[str] = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

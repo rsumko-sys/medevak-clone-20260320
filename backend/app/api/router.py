@@ -12,6 +12,7 @@ from app.api.v1 import (
     body_markers,
     injuries,
     events,
+    events_stream,
     evacuation,
     march,
     reference,
@@ -37,6 +38,7 @@ api_router.include_router(documents.router)
 api_router.include_router(body_markers.router)
 api_router.include_router(injuries.router)
 api_router.include_router(events.router)
+api_router.include_router(events_stream.router)
 api_router.include_router(evacuation.router)
 api_router.include_router(march.router)
 api_router.include_router(reference.router)

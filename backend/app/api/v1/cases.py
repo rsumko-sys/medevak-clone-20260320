@@ -26,6 +26,7 @@ from app.models.vitals import VitalsObservation
 from app.models.march import MarchAssessment
 from app.models.evacuation import EvacuationRecord
 from app.models.events import Event
+from app.services.events import log_event
 
 # Schemas
 from app.schemas.unified import CaseCreate, CaseUpdate, CaseResponse, CaseDetailResponse, InjuryCreate
@@ -138,7 +139,12 @@ async def get_case(
     vitals = (await session.execute(get_stmt(VitalsObservation).order_by(VitalsObservation.measured_at.desc()))).scalars().all()
     march = (await session.execute(get_stmt(MarchAssessment).order_by(MarchAssessment.assessed_at.desc()))).scalars().all()
     evac = (await session.execute(get_stmt(EvacuationRecord))).scalars().first()
-    events = (await session.execute(get_stmt(Event).order_by(Event.event_time.desc()))).scalars().all()
+    events_stmt = (
+        select(Event)
+        .where(Event.entity_type == "case", Event.entity_id == case_id)
+        .order_by(Event.created_at.desc())
+    )
+    events = (await session.execute(events_stmt)).scalars().all()
 
     detail = CaseDetailResponse.model_validate(case)
     detail.injuries = injuries
@@ -187,14 +193,14 @@ async def update_case(
 
     # ── Auto system event on status change ────────────────────────────────
     if new_status is not None and new_status != old_status:
-        evt = Event(
-            id=str(uuid.uuid4()),
-            case_id=case_id,
-            event_type="SYSTEM",
-            actor_id=user.get("sub"),
-            payload={"action": "STATUS_CHANGE", "from": old_status, "to": new_status},
+        await log_event(
+            session,
+            type="CASE_STATUS_UPDATED",
+            entity_type="case",
+            entity_id=case_id,
+            payload={"from": old_status, "to": new_status},
+            user=user,
         )
-        session.add(evt)
 
     await log_audit(session, "cases", case_id, "update", user.get("sub"), old_values=old_values, new_values=body.model_dump(exclude_unset=True))
     await enqueue_sync(session, "case", case_id, "update", {"id": case_id}, user.get("device_id"))

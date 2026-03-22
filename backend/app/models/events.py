@@ -1,21 +1,21 @@
-"""Events/Timeline model."""
-from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
-from sqlalchemy.dialects.sqlite import JSON
+"""Events model — domain event store."""
+import uuid
+from sqlalchemy import Column, String, DateTime, func, Index, JSON
 from app.core.database import Base
 
 
 class Event(Base):
     __tablename__ = "events"
-    
-    id = Column(String, primary_key=True)
-    case_id = Column(String, ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    
-    event_type = Column(String, nullable=False) # SYSTEM, USER, INTEGRATION
-    event_time = Column(DateTime, default=datetime.utcnow)
-    actor_id = Column(String, nullable=True)
-    
-    payload = Column(JSON, nullable=True)
-    
-    recorded_at = Column(DateTime, default=datetime.utcnow)
-    voided = Column(Boolean, default=False)
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    type = Column(String, nullable=False)            # CASE_CREATED, BLOOD_USED…
+    entity_type = Column(String, nullable=False)     # case | blood | evac
+    entity_id = Column(String, nullable=False, index=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    unit = Column(String, index=True, nullable=False)
+    created_by = Column(String, nullable=True)       # user id (sub)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_events_unit_created_at", "unit", "created_at"),
+    )
