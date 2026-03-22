@@ -2,18 +2,28 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import event
+from sqlalchemy.pool import NullPool
 
 from app.core.config import DATABASE_URL
 
+_is_postgres = DATABASE_URL.startswith("postgresql")
+
 # SQLite concurrency safeguards: multi-process/thread connection support
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+# Vercel is serverless — persistent pools provide no benefit and leak connections on Neon.
+# Use NullPool for PostgreSQL; keep default pool for local SQLite dev.
+_pool_kwargs: dict = (
+    {"poolclass": NullPool}
+    if _is_postgres
+    else {"pool_pre_ping": True, "pool_recycle": 3600}
+)
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     connect_args=connect_args,
-    pool_pre_ping=True,
-    pool_recycle=3600,
+    **_pool_kwargs,
 )
 
 # SQLite WAL mode for better concurrency performance

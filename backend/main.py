@@ -57,7 +57,7 @@ except Exception as exc:  # noqa: BLE001
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Auto-create database tables on first run (needed on Vercel/ephemeral environments)."""
+    """On startup: run Alembic migrations (PostgreSQL) or create_all (SQLite/local dev)."""
     try:
         from app.core.database import engine, Base  # noqa: F401 — triggers model registration
         # Import all models so Base.metadata knows about them
@@ -77,8 +77,26 @@ async def lifespan(app: FastAPI):
         import app.models.sync_queue  # noqa: F401
         import app.models.audit  # noqa: F401
         import app.models.revoked_token  # noqa: F401
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        from app.core.config import DATABASE_URL as _DB_URL
+        if _DB_URL.startswith("postgresql"):
+            # PostgreSQL (Neon/prod): apply all pending migrations via Alembic.
+            # This is the only correct approach — create_all bypasses migration history.
+            import asyncio
+            from alembic.config import Config as AlembicConfig
+            from alembic import command as alembic_command
+
+            def _run_alembic_upgrade() -> None:
+                _ini = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alembic.ini")
+                _scripts = os.path.join(os.path.dirname(os.path.abspath(__file__)), "migrations")
+                cfg = AlembicConfig(_ini)
+                cfg.set_main_option("script_location", _scripts)
+                alembic_command.upgrade(cfg, "head")
+
+            await asyncio.to_thread(_run_alembic_upgrade)
+        else:
+            # SQLite (local dev / fallback): create tables directly — fast, no history needed.
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
         # Prune expired revoked JTIs at startup to keep the table small
         try:
             from sqlalchemy import delete as sa_delete
