@@ -520,19 +520,19 @@ export default function BattlefieldPage() {
       )}
 
       {/* TABS */}
-      <div className="flex flex-wrap border-b border-[#1c1f26] bg-[#0f1217]">
+      <div className="flex overflow-x-auto border-b border-[#1c1f26] bg-[#0f1217] scrollbar-none">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 md:px-6 py-4 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[170px] flex-1 ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
+            className={`flex-1 px-4 py-3 text-xs font-bold tracking-[0.1em] uppercase whitespace-nowrap border-b-2 transition-colors min-w-[130px] ${activeTab === tab.id ? 'border-red-600 text-white bg-[#1a1c22]' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-[#15181e]'}`}
           >
             {tab.name}
           </button>
         ))}
       </div>
 
-      <main className="flex-1 p-4 lg:p-6 overflow-y-auto w-full max-w-7xl mx-auto pb-32 pb-safe-area">
+      <main className="flex-1 p-4 lg:p-6 overflow-y-auto w-full max-w-7xl mx-auto pb-24">
         {activeTab === 'S1' && (
           <div className="max-w-3xl mx-auto space-y-6">
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md">
@@ -673,11 +673,7 @@ export default function BattlefieldPage() {
                  onZoneClick={handleZoneClick} 
                />
 
-                  {!selectedZoneId && (
-                     <p className="absolute bottom-6 left-0 right-0 text-center text-gray-500 font-mono text-[10px] uppercase tracking-[0.2em] pointer-events-none animate-pulse">
-                       Натисніть на зону тіла щоб додати травму
-                     </p>
-                  )}
+   
                
                {/* Right Side: Log or S2-BS Form */}
                <div className="w-full lg:w-1/3 flex flex-col gap-4">
