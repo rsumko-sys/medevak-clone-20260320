@@ -12,6 +12,8 @@ from app.exporters.fhir_exporter import (
     validate_fhir_bundle,
     get_fhir_summary
 )
+from app.models.medications import MedicationAdministration
+from app.models.procedures import Procedure
 from app.repositories.cases import CasesRepository
 from app.repositories.observations import ObservationRepository
 from app.repositories.procedures import ProcedureRepository
@@ -43,8 +45,8 @@ async def export_case_fhir(
     med_repo = MedicationRepository(session)
     
     observations = await obs_repo.get_by_case(case_id)
-    procedures = await proc_repo.get_by_case(case_id)
-    medications = await med_repo.get_by_case(case_id)
+    procedures = await proc_repo.get_all(filters=[Procedure.case_id == case_id])
+    medications = await med_repo.get_all(filters=[MedicationAdministration.case_id == case_id])
     
     # Export to FHIR
     try:

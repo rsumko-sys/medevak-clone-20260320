@@ -62,7 +62,7 @@ def export_case_with_related_data(
             "error": "FHIR resources not available"
         }
     
-    return bundle.dict(exclude_none=True)
+    return bundle.model_dump(exclude_none=True)
 
 
 def validate_fhir_bundle(bundle: Dict[str, Any]) -> List[str]:

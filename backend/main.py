@@ -68,10 +68,10 @@ async def enforce_private_network_only(request: Request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
-        "http://127.0.0.1:3000", 
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
         "http://0.0.0.0:3000",
-        "*.railway.app"
+        *[o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()],
     ],
     allow_credentials=True,
     allow_methods=["*"],

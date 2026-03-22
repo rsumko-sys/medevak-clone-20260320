@@ -41,19 +41,17 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     if case:
         mechanism = getattr(case, "mechanism_of_injury", None) or getattr(case, "mechanism", None) or ""
 
-    # Injuries (from CaseInjury if available)
+    # Injuries
     try:
-        from app.models.cases import CaseInjury
-        stmt = select(CaseInjury).where(CaseInjury.case_id == case_id)
+        from app.models.injuries import Injury
+        stmt = select(Injury).where(Injury.case_id == case_id)
         res = await session.execute(stmt)
         for row in res.scalars().all():
             injuries.append({
                 "id": row.id,
-                "body_part": getattr(row, "body_part_code", "") or "",
-                "type": getattr(row, "injury_type_code", "") or "",
+                "body_part": row.body_region or "",
+                "type": row.injury_type or "",
             })
-    except ImportError as e:
-        logger.warning("CaseInjury import failed in MIST aggregation: %s", e)
     except Exception as e:
         logger.exception("MIST injuries aggregation failed for case %s: %s", case_id, e)
         warnings.append("failed to load injuries")
@@ -63,7 +61,17 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
     try:
         obs_list = await obs_repo.get_by_case(case_id)
         signs["vitals"] = [
-            {"type": getattr(o, "observation_type", "") or "", "value": str(getattr(o, "value", "") or "")}
+            {
+                "heart_rate": o.heart_rate,
+                "respiratory_rate": o.respiratory_rate,
+                "systolic_bp": o.systolic_bp,
+                "diastolic_bp": o.diastolic_bp,
+                "spo2_percent": o.spo2_percent,
+                "temperature_celsius": o.temperature_celsius,
+                "gcs_total": o.gcs_total,
+                "avpu": o.avpu,
+                "pain_score": o.pain_score,
+            }
             for o in obs_list
         ]
     except Exception as e:
@@ -86,9 +94,9 @@ async def _aggregate_mist(session: AsyncSession, case_id: str) -> tuple[dict, li
 
     # Treatment: procedures
     try:
-        from app.models.cases import CaseProcedure
+        from app.models.procedures import Procedure
         proc_repo = ProcedureRepository(session)
-        procs = await proc_repo.get_all(filters=[CaseProcedure.case_id == case_id])
+        procs = await proc_repo.get_all(filters=[Procedure.case_id == case_id])
         for row in procs:
             treatment["procedures"].append({
                 "code": getattr(row, "procedure_code", "") or "",

@@ -35,7 +35,20 @@ async def _get_case_dict(session: AsyncSession, case_id: str) -> dict | None:
     procs = await proc_repo.get_all(filters=[CaseProcedure.case_id == case_id])
 
     def _obs(o):
-        return {"id": str(o.id), "case_id": str(o.case_id), "observation_type": o.observation_type, "value": o.value}
+        return {
+            "id": str(o.id),
+            "case_id": str(o.case_id),
+            "heart_rate": o.heart_rate,
+            "respiratory_rate": o.respiratory_rate,
+            "systolic_bp": o.systolic_bp,
+            "diastolic_bp": o.diastolic_bp,
+            "spo2_percent": o.spo2_percent,
+            "temperature_celsius": o.temperature_celsius,
+            "gcs_total": o.gcs_total,
+            "avpu": o.avpu,
+            "pain_score": o.pain_score,
+            "measured_at": o.measured_at.isoformat() if o.measured_at else None,
+        }
 
     def _med(m):
         t = getattr(m, "time_administered", None)
