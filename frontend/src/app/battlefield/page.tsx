@@ -460,7 +460,7 @@ export default function BattlefieldPage() {
 
   return (
     <div className="h-screen bg-[#0b0d10] text-[#a0a5b0] flex flex-col font-sans relative overflow-hidden">
-      <header className="flex items-center justify-between p-4 border-b border-[#1c1f26] bg-[#0f1217]">
+      <header className="grid grid-cols-3 items-center p-4 border-b border-[#1c1f26] bg-[#0f1217]">
         <div className="flex items-center gap-4">
           <Link href="/" className="p-2 bg-[#1c1f26] rounded-md hover:bg-[#2a2f3a] transition-colors border border-[#2a2f3a]">
             <ArrowLeft className="w-5 h-5 text-gray-400" />
@@ -471,34 +471,36 @@ export default function BattlefieldPage() {
           </div>
         </div>
 
-        {/* CPR stopwatch — inline in header */}
-        <button
-          onClick={handleSwClick}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg border font-mono transition-all select-none ${
-            swState === 'running'
-              ? 'bg-red-950/30 border-red-900/60'
-              : swState === 'stopped'
-              ? 'bg-[#1a1d24] border-yellow-900/50'
-              : 'bg-[#12151a] border-[#252930] hover:border-[#3a3f4a]'
-          }`}
-          title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
-        >
-          <span className={`text-[8px] uppercase tracking-[0.2em] font-bold ${
-            swState === 'running' ? 'text-red-700' : swState === 'stopped' ? 'text-yellow-700' : 'text-gray-600'
-          }`}>
-            {swState === 'idle' ? '▶ КПР' : swState === 'running' ? '█ СТОП' : '↺ СКИНУТИ'}
-          </span>
-          <span className={`text-2xl font-bold tabular-nums tracking-widest ${
-            swState === 'running' ? 'text-red-600' : swState === 'stopped' ? 'text-yellow-600' : 'text-gray-600'
-          }`}>
-            {formatSw(swMs)}
-          </span>
-          {swState === 'running' && (
-            <span className="text-[7px] text-red-800 uppercase tracking-[0.1em] animate-pulse">●</span>
-          )}
-        </button>
+        {/* CPR stopwatch — truly centered */}
+        <div className="flex justify-center">
+          <button
+            onClick={handleSwClick}
+            className={`flex items-center gap-3 px-4 py-2 rounded-lg border font-mono transition-all select-none ${
+              swState === 'running'
+                ? 'bg-red-950/30 border-red-900/60'
+                : swState === 'stopped'
+                ? 'bg-[#1a1d24] border-yellow-900/50'
+                : 'bg-[#12151a] border-[#252930] hover:border-[#3a3f4a]'
+            }`}
+            title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
+          >
+            <span className={`text-[8px] uppercase tracking-[0.2em] font-bold ${
+              swState === 'running' ? 'text-red-700' : swState === 'stopped' ? 'text-yellow-700' : 'text-gray-600'
+            }`}>
+              {swState === 'idle' ? '▶ КПР' : swState === 'running' ? '█ СТОП' : '↺ СКИНУТИ'}
+            </span>
+            <span className={`text-2xl font-bold tabular-nums tracking-widest ${
+              swState === 'running' ? 'text-red-600' : swState === 'stopped' ? 'text-yellow-600' : 'text-gray-600'
+            }`}>
+              {formatSw(swMs)}
+            </span>
+            {swState === 'running' && (
+              <span className="text-[7px] text-red-800 uppercase tracking-[0.1em] animate-pulse">●</span>
+            )}
+          </button>
+        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 justify-end">
           <button
             onClick={startNewDraft}
             className="h-12 px-4 rounded-md border border-[#2a2f3a] bg-[#1a1d24] text-white font-bold text-sm"
