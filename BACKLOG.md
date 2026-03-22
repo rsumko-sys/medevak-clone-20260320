@@ -7,26 +7,13 @@
 
 ---
 
-## #1 — Access token живе після logout (short-TTL design)
+## #1 — Access token живе після logout ~~(short-TTL design)~~ ✅ ЧАСТКОВО ЗАКРИТО
 
-**Стан зараз:**  
-При logout `token_version` інкрементується в БД → старий `refresh_token` → 401 ✅  
-Але старий `access_token` (JWT, stateless) живе до expiry (~15 хв).
+**Закрито (TTL частина) в `2508d82` (2026-03-23).**  
+`ACCESS_TOKEN_EXPIRE_MINUTES` знижено 60 → 5. Вікно атаки: ~5 хв.
 
-**Чому це важливо:**  
-Якщо пристрій захоплений або токен вкрадений — атакер має вікно ~15 хв доступу після того, як справжній користувач вийшов.
-
-**Два варіанти виправлення:**
-
-| Варіант | Зміни | Trade-off |
-|---------|-------|-----------|
-| Скоротити `ACCESS_TOKEN_EXPIRE_MINUTES` до 5 | 1 env var | Вікно ~5 хв, але не нуль |
-| Upstash Redis JTI blacklist | ~50 рядків коду + Upstash free tier | Миттєва ревокація, +1 залежність, +~1ms latency |
-
-**Рекомендація для бойового розгортання:** Redis JTI blacklist.  
-**До першого бойового:** достатньо TTL=5хв.
-
-**Файли до зміни:** `backend/app/core/security.py`, `backend/app/api/v1/auth.py`
+**Залишок — Redis JTI blacklist (P2, окрема задача):**  
+Миттєва ревокація при logout. Потребує Upstash + ~50 рядків коду. Відкладено до першого бойового розгортання.
 
 ---
 
@@ -85,18 +72,12 @@ auth.spec.ts        — logout → /login, no protected routes accessible
 
 ---
 
-## #5 — Винести `alembic upgrade head` зі старту апки в release step (архітектура)
+## #5 — Винести `alembic upgrade head` в release step ✅ ЗАКРИТО
 
-**Стан зараз:**  
-`main.py` lifespan викликає `alembic upgrade head` при кожному cold start на PostgreSQL.  
-Це працює, але: (а) додає ~200–500ms до cold start, (б) Alembic не призначений для запуску в async event loop lifespan.
-
-**Правильний підхід:** окремий release command у Nixpacks/Procfile — `python -m alembic upgrade head` — що виконується **один раз** перед запуском uvicorn.
-
-**Дія:**  
-1. Додати в `backend/Procfile` або `nixpacks.toml` release step  
-2. Зробити lifespan PostgreSQL-гілку no-op (або залишити як fallback з `--no-fail`)  
-**Файли:** `backend/main.py`, `backend/Procfile`, `backend/nixpacks.toml`
+**Закрито в `2508d82` (2026-03-23).**  
+`nixpacks.toml` і `Procfile` вже мали `alembic upgrade head && uvicorn` — release step існував.  
+`main.py` lifespan тепер запускає alembic **тільки на Vercel** (`os.getenv("VERCEL")`).  
+На nixpacks/Railway/Heroku — lifespan пропускає alembic, довіряє release step. ~300ms cold start зекономлено.
 
 ---
 
@@ -114,8 +95,9 @@ auth.spec.ts        — logout → /login, no protected routes accessible
 | Пріоритет | Item | Блокер |
 |-----------|------|--------|
 | ✅ ЗАКРИТО | #2 Persistent DB | Neon verified, v1.2-neon |
-| 🟡 P1 | #1 Access token revocation | Ні — TTL=5хв як проміжне рішення |
-| 🟡 P1 | #5 Alembic → release step | Ні — поточне рішення production-safe |
+| ✅ ЗАКРИТО | #1 Token TTL=5хв | `2508d82` — вікно 60→5 хв |
+| ✅ ЗАКРИТО | #5 Alembic release step | `2508d82` — lifespan only on Vercel |
+| 🟢 P2 | #1 Redis JTI blacklist | Ні — миттєва ревокація, після бойового |
 | 🟢 P2 | #4 Cold-start guard у smoke | Ні — косметика |
 | 🟢 P2 | #6 Docs update (Neon) | Ні — актуалізація |
 | 🟢 P2 | #3 UI E2E tests | Ні — ручна перевірка поки достатня |
