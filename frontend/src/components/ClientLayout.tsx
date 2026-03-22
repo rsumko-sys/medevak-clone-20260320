@@ -9,7 +9,7 @@ import { ErrorBoundary } from './ErrorBoundary'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isNoSidebarPage = pathname === '/' || pathname === '/battlefield'
+  const isNoSidebarPage = pathname === '/' || pathname === '/battlefield' || pathname === '/field'
 
   if (isNoSidebarPage) {
     return (
