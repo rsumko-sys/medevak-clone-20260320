@@ -6,10 +6,10 @@ export default function HomePage() {
     <div className="min-h-[calc(100vh-2rem)] flex flex-col items-center justify-center p-4">
       
       {/* Header */}
-      <div className="text-center mb-16 space-y-2">
-        <p className="wolf-title text-gray-500 tracking-[0.3em]">АЗОВ</p>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-widest text-white">МЕДИЧНА СЛУЖБА</h1>
-        <p className="wolf-title text-gray-400 tracking-[0.3em]">CCRM</p>
+      <div className="text-center mb-16 space-y-3">
+        <p className="text-3xl md:text-4xl font-bold tracking-[0.35em] text-white uppercase">АЗОВ</p>
+        <h1 className="text-sm md:text-base font-semibold tracking-[0.3em] text-gray-400 uppercase">МЕДИЧНА СЛУЖБА</h1>
+        <p className="text-[10px] text-gray-600 tracking-[0.3em] uppercase font-medium">CCRM</p>
       </div>
 
       {/* Main Cards */}
