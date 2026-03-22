@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Shield, LogIn } from 'lucide-react'
 import { login } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,7 +18,9 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email.trim(), password)
-      const from = searchParams.get('from')
+      const from = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('from')
+        : null
       const target = from && from !== '/login' ? from : '/dashboard'
       router.replace(target)
     } catch (err: any) {
