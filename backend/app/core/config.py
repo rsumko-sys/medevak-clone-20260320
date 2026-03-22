@@ -28,7 +28,7 @@ if DEV_AUTH_BYPASS and ENV != "development":
     raise RuntimeError("DEV_AUTH_BYPASS is forbidden outside development")
 
 # CORS: comma-separated origins, e.g. "http://localhost:3000,https://your-domain.com"
-_CORS_RAW = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+_CORS_RAW = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,https://medevak-clone-front-clone-20260321.vercel.app")
 CORS_ORIGINS: List[str] = [o.strip() for o in _CORS_RAW.split(",") if o.strip()]
 
 # Rate limiting
