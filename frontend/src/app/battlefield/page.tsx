@@ -25,6 +25,7 @@ export default function BattlefieldPage() {
   const [activeTab, setActiveTab] = useState('S1')
   const [isRecording, setIsRecording] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [hasDraftRestored, setHasDraftRestored] = useState(false)
   const [recordingLabel, setRecordingLabel] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<BlobPart[]>([])
@@ -141,10 +142,19 @@ export default function BattlefieldPage() {
       setEvacData(draft.evacData || { evacuation_priority: 'ROUTINE' })
       setQuickMedications(Array.isArray(draft.quickMedications) ? draft.quickMedications : [])
       setQuickProcedures(Array.isArray(draft.quickProcedures) ? draft.quickProcedures : [])
+      // Draft is NOT removed here — it stays until server returns 200 OK
+      setHasDraftRestored(true)
     } catch {
       window.localStorage.removeItem('battlefieldDraft')
     }
   }, [])
+
+  // Notify medic when unsaved draft is restored
+  useEffect(() => {
+    if (hasDraftRestored) {
+      toast.info('⚠ Відновлено незбережену чернетку — натисніть "Зберегти" для відправки на сервер')
+    }
+  }, [hasDraftRestored]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (typeof window === 'undefined') return
