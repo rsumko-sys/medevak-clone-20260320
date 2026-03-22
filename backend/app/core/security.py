@@ -4,6 +4,7 @@ from enum import Enum
 import structlog
 import time
 from collections import deque
+from fastapi import HTTPException
 
 
 logger = structlog.get_logger()
@@ -166,7 +167,7 @@ def filter_sensitive_data(data: Dict[str, Any], user_role: str, user_unit: str =
             filtered_data[field] = None  # type: ignore
     
     # Filter nested records for medics from other units
-    if user_role == UserRole.MEDIC and user_unit != data.get("unit", ""):
+    if current_role == UserRole.MEDIC and user_unit != data.get("unit", ""):
         for record_type in ["medical_records", "personnel_records", "deployment_records"]:
             if record_type in filtered_data:
                 filtered_data[record_type] = []
@@ -198,9 +199,9 @@ class SecurityContext:
         return can_access_unit(self.unit, target_unit, self.role)
     
     def validate_unit_access(self, target_unit: str):
-        """Strict validation of unit access. Raises exception if denied."""
+        """Strict validation of unit access. Raises 403 if denied."""
         if not self.can_access_unit(target_unit):
-            raise Exception(f"Access Denied: Unit isolation violation. Target: {target_unit}")
+            raise HTTPException(status_code=403, detail="Access denied: unit isolation violation")
 
     def can_access_sensitive_data(self, data_type: str) -> bool:
         """Check if user can access sensitive data type."""
@@ -237,11 +238,11 @@ class SecurityContext:
             timestamps.popleft()
             
         if len(timestamps) >= limit:
-            logger.warning("Rate limit exceeded", 
-                        user_id=self.user_id, 
-                        action=action,
-                        limit=limit)
-            raise Exception(f"Rate limit exceeded: {limit} requests per {window_seconds}s")
+            logger.warning("Rate limit exceeded",
+                           user_id=self.user_id,
+                           action=action,
+                           limit=limit)
+            raise HTTPException(status_code=429, detail=f"Rate limit exceeded: {limit} requests per {window_seconds}s")
             
         timestamps.append(now)
 

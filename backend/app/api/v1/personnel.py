@@ -17,7 +17,7 @@ from app.api.deps import (
     get_security_context,
     require_permission
 )
-from app.core.security import SecurityContext, Permission
+from app.core.security import SecurityContext, Permission, UserRole
 from app.models.personnel import ServiceMember, PersonnelRecord, MedicalRecord, DeploymentRecord
 from app.models.cases import Case
 from app.schemas.personnel import (
@@ -69,7 +69,7 @@ async def list_service_members(
     
     # Base filters for QLAC
     # Note: unit filter is handled inside repository based on ctx.unit if not admin
-    effective_unit = unit if ctx.has_permission(Permission.ADMIN) else ctx.unit
+    effective_unit = unit if ctx.role == UserRole.ADMIN else ctx.unit
     
     members = await repo.list_with_filters(
         unit=effective_unit,
@@ -126,7 +126,7 @@ async def get_service_member(
         # QLAC: Query with unit isolation and soft-delete hidden by default
         member = await repo.get_by_id_all_relations(
             member_id=member_id,
-            unit=None if ctx.has_permission(Permission.ADMIN) else ctx.unit,
+            unit=None if ctx.role == UserRole.ADMIN else ctx.unit,
             include_medical=include_medical,
             include_deployments=include_deployments,
             include_personnel=include_records,
@@ -315,7 +315,7 @@ async def update_service_member(
 
     
     # QLAC: Unit isolation in update
-    if not ctx.has_permission(Permission.ADMIN):
+    if ctx.role != UserRole.ADMIN:
         stmt = stmt.where(ServiceMember.unit == ctx.unit)
         
     update_values = {}

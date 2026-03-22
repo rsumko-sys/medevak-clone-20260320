@@ -1,6 +1,9 @@
 import os
 import sys
 import ipaddress
+import time
+import threading
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Request
@@ -8,6 +11,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Ensure the backend and its parent are in the path for robust imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +23,22 @@ if current_dir not in sys.path:
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-app = FastAPI(title="MEDEVAK API")
+# ── Global rate limiter (shared across all routers) ─────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
+# ── In-memory auth-failure metrics (lightweight monitoring) ─────────────────
+_metrics_lock = threading.Lock()
+_auth_metrics: dict = {
+    "login_failures": 0,
+    "token_invalid": 0,
+    "permission_denied": 0,
+    "rate_limited": 0,
+    "window_start": time.time(),
+}
+
+def record_metric(key: str) -> None:
+    with _metrics_lock:
+        _auth_metrics[key] = _auth_metrics.get(key, 0) + 1
 
 PRIVATE_NETWORK_ONLY = False
 api_router = None
@@ -32,6 +53,56 @@ try:
     PRIVATE_NETWORK_ONLY = imported_private_network_only
 except Exception as exc:  # noqa: BLE001
     startup_error = f"Startup import failure: {exc.__class__.__name__}: {exc}"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Auto-create database tables on first run (needed on Vercel/ephemeral environments)."""
+    try:
+        from app.core.database import engine, Base  # noqa: F401 — triggers model registration
+        # Import all models so Base.metadata knows about them
+        import app.models.user  # noqa: F401
+        import app.models.cases  # noqa: F401
+        import app.models.personnel  # noqa: F401
+        import app.models.injuries  # noqa: F401
+        import app.models.medications  # noqa: F401
+        import app.models.vitals  # noqa: F401
+        import app.models.procedures  # noqa: F401
+        import app.models.march  # noqa: F401
+        import app.models.evacuation  # noqa: F401
+        import app.models.events  # noqa: F401
+        import app.models.documents  # noqa: F401
+        import app.models.idempotency  # noqa: F401
+        import app.models.sync_queue  # noqa: F401
+        import app.models.audit  # noqa: F401
+        import app.models.revoked_token  # noqa: F401
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        # Prune expired revoked JTIs at startup to keep the table small
+        try:
+            from sqlalchemy import delete as sa_delete
+            from datetime import datetime, timezone
+            from app.models.revoked_token import RevokedToken
+            async with engine.begin() as conn:
+                await conn.execute(
+                    sa_delete(RevokedToken).where(
+                        RevokedToken.expires_at < datetime.now(timezone.utc)
+                    )
+                )
+        except Exception:  # noqa: BLE001
+            pass  # Non-fatal: pruning is a housekeeping optimisation
+    except Exception as exc:  # noqa: BLE001
+        # Non-fatal: log but continue (tables may already exist or DB is managed externally)
+        import logging
+        logging.getLogger(__name__).warning("Auto-migrate warning: %s", exc)
+    yield
+
+
+app = FastAPI(title="MEDEVAK API", lifespan=lifespan)
+
+# ── Wire SlowAPI to the app (MUST be before routes) ─────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # → 429
 
 
 def _is_private_client_ip(value: str) -> bool:
@@ -64,6 +135,20 @@ async def enforce_private_network_only(request: Request, call_next):
         },
     )
 
+@app.middleware("http")
+async def track_auth_metrics(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/api/auth") or path.startswith("/api/"):
+        if response.status_code == 401:
+            record_metric("token_invalid")
+        elif response.status_code == 403:
+            record_metric("permission_denied")
+        elif response.status_code == 429:
+            record_metric("rate_limited")
+    return response
+
+
 # Add CORS middleware to allow frontend (port 3000) to communicate with backend (port 8000)
 app.add_middleware(
     CORSMiddleware,
@@ -94,6 +179,20 @@ async def health_check():
         "status": status,
         "timestamp": str(datetime.now()),
         "startup_error": startup_error,
+    }
+
+@app.get("/api/metrics")
+async def get_metrics(request: Request):
+    """Auth and rate-limit metrics for monitoring. Admin-only in prod."""
+    with _metrics_lock:
+        snapshot = dict(_auth_metrics)
+        elapsed = time.time() - snapshot["window_start"]
+    return {
+        "window_seconds": round(elapsed),
+        "login_failures": snapshot["login_failures"],
+        "token_invalid": snapshot["token_invalid"],
+        "permission_denied": snapshot["permission_denied"],
+        "rate_limited": snapshot["rate_limited"],
     }
 
 # Robust static directory resolution

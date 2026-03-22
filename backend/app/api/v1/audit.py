@@ -2,7 +2,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
-from app.api.deps import get_current_user, get_request_id, get_session
+from app.api.deps import get_request_id, get_session, require_role
 from app.core.utils import envelope
 from app.repositories.audit import AuditRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ def _serialize_audit(a) -> dict:
 @router.get("")
 async def list_audit(
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_role("admin"))],
     request_id: Annotated[str, Depends(get_request_id)],
     table_name: str | None = Query(None),
     row_id: str | None = Query(None),

@@ -2,15 +2,24 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Settings, ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Settings, ArrowLeft, LogOut } from 'lucide-react'
+import { logout } from '@/lib/api'
 
 export default function Topbar() {
+  const router = useRouter()
+
   const currentDate = new Date().toLocaleDateString('uk-UA', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   })
+
+  const handleLogout = () => {
+    logout()
+    router.replace('/login')
+  }
 
   return (
     <header className="h-16 shrink-0 border-b border-borderContent bg-background flex items-center justify-between px-6 sticky top-0 z-10">
@@ -32,6 +41,13 @@ export default function Topbar() {
           <div className="w-2 h-2 rounded-full bg-green-500" />
           <span className="text-[10px] tracking-widest text-gray-400 uppercase font-bold">ОНЛАЙН</span>
         </div>
+        <button
+          onClick={handleLogout}
+          className="p-2 border border-borderContent bg-panel rounded-md text-gray-400 hover:text-red-400 hover:bg-red-900/20 hover:border-red-900/50 transition-colors outline-none focus:outline-none"
+          title="Вийти"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </header>
   )

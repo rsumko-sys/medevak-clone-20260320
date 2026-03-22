@@ -17,8 +17,13 @@ from app.core.security import Permission, SecurityContext
 logger = logging.getLogger(__name__)
 
 # Simple in-memory cache for user data to reduce DB load
+# Short TTL so role changes and deactivation propagate quickly
 _USER_CACHE: Dict[str, Dict[str, Any]] = {}
-_CACHE_TTL = 30 # seconds
+_CACHE_TTL = 5  # seconds — fast propagation of role/deactivation changes
+
+def invalidate_user_cache(user_id: str) -> None:
+    """Call this on password change, role update, or forced logout."""
+    _USER_CACHE.pop(user_id, None)
 
 http_bearer = HTTPBearer(auto_error=False)
 
@@ -72,10 +77,19 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is deactivated")
 
+    # Enforce logout-all: reject tokens issued before the current token_version
+    token_tv = payload.get("tv", 0)
+    if token_tv < (user.token_version or 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session revoked — please log in again",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     user_data = {
-        "sub": user.id, 
-        "email": user.email, 
-        "device_id": user.device_id or "dev-1", 
+        "sub": user.id,
+        "email": user.email,
+        "device_id": user.device_id,  # None if not bound — no fake fallback
         "role": user.role or "viewer",
         "unit": user.unit or ""
     }
@@ -95,13 +109,21 @@ async def get_security_context(
     return SecurityContext(user, request_id=request_id)
 
 def require_permission(permission: Permission):
-    async def _check(ctx: Annotated[SecurityContext, Depends(get_security_context)]) -> SecurityContext:
-        if not ctx.has_permission(permission):
+    """Require a specific permission; returns the user dict (not SecurityContext)."""
+    async def _check(
+        user: Annotated[dict, Depends(get_current_user)],
+    ) -> dict:
+        from app.core.security import ROLE_PERMISSIONS, UserRole
+        try:
+            role = UserRole(user.get("role", "viewer"))
+        except ValueError:
+            role = UserRole.VIEWER
+        if permission not in ROLE_PERMISSIONS.get(role, []):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
-                detail=f"Missing required permission: {permission}"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Missing required permission: {permission}",
             )
-        return ctx
+        return user
     return _check
 
 def require_role(*roles: str):
@@ -110,3 +132,13 @@ def require_role(*roles: str):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return user
     return _check
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract real client IP, honouring X-Forwarded-For set by trusted proxies."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.api.deps import get_current_user, get_request_id, get_session
+from app.api.deps import get_current_user, get_request_id, get_session, require_role
 from app.core.utils import envelope
 
 from app.models.cases import Case
@@ -20,7 +20,7 @@ async def upsert_evacuation(
     case_id: str,
     body: EvacuationCreate,
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_role("admin", "medic"))],
     request_id: Annotated[str, Depends(get_request_id)],
 ):
     case = await session.get(Case, case_id)

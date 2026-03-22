@@ -81,14 +81,30 @@ export async function login(email: string, password: string): Promise<{ id: stri
   if (typeof window !== 'undefined') {
     localStorage.setItem(TOKEN_KEY, access_token)
     if (refresh_token) localStorage.setItem(REFRESH_KEY, refresh_token)
+    // Session indicator for middleware (not the JWT itself)
+    document.cookie = 'medevak_auth=1; path=/; SameSite=Strict'
   }
   return user
 }
 
 export function logout(): void {
   if (typeof window !== 'undefined') {
+    const refreshToken = localStorage.getItem(REFRESH_KEY)
+    // Blacklist the refresh token server-side (fire-and-forget)
+    if (refreshToken) {
+      const accessToken = localStorage.getItem(TOKEN_KEY)
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }).catch(() => {/* best-effort — proceed with local cleanup regardless */})
+    }
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_KEY)
+    document.cookie = 'medevak_auth=; path=/; max-age=0; SameSite=Strict'
   }
 }
 
@@ -126,6 +142,7 @@ async function apiGet<T>(path: string): Promise<T> {
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
     if (!refreshed) {
+      logout()
       if (typeof window !== 'undefined') window.location.href = '/login'
       throw new Error('401 Session expired — please log in again')
     }
@@ -145,6 +162,7 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
     if (!refreshed) {
+      logout()
       if (typeof window !== 'undefined') window.location.href = '/login'
       throw new Error('401 Session expired — please log in again')
     }
@@ -168,6 +186,7 @@ async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   if (res.status === 401) {
     const refreshed = await tryRefreshToken()
     if (!refreshed) {
+      logout()
       if (typeof window !== 'undefined') window.location.href = '/login'
       throw new Error('401 Session expired — please log in again')
     }

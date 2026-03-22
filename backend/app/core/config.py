@@ -5,6 +5,9 @@ from typing import List
 ENV = os.getenv("ENV", "development")
 
 _raw_db_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./medevak.db")
+# On Vercel, the deployed filesystem is read-only; use /tmp for SQLite
+if os.getenv("VERCEL") and _raw_db_url.startswith("sqlite"):
+    _raw_db_url = "sqlite+aiosqlite:////tmp/medevak.db"
 # Railway provides postgresql:// — upgrade to asyncpg async driver
 if _raw_db_url.startswith("postgresql://"):
     _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -15,10 +18,16 @@ DATABASE_URL = _raw_db_url
 # Auth
 if ENV == "development":
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production-medevak-2024")
+    if SECRET_KEY == "dev-secret-change-in-production-medevak-2024":
+        import warnings
+        warnings.warn(
+            "Using default dev SECRET_KEY — generate a real one with: openssl rand -hex 32",
+            stacklevel=2,
+        )
 else:
     SECRET_KEY = os.getenv("SECRET_KEY")
-    if not SECRET_KEY or SECRET_KEY == "changeme":
-        raise RuntimeError("SECRET_KEY is not set properly")
+    if not SECRET_KEY or SECRET_KEY in ("changeme", "dev-secret-change-in-production-medevak-2024"):
+        raise RuntimeError("SECRET_KEY is not set properly — set a strong SECRET_KEY environment variable")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60

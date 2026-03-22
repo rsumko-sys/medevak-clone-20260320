@@ -6,7 +6,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import Response
 
-from app.api.deps import get_current_user, get_request_id, get_session
+from app.api.deps import get_current_user, get_request_id, get_session, require_permission
+from app.core.security import Permission
 from app.core.utils import envelope
 from app.exporters.fhir_exporter import export_case_to_fhir
 from app.exporters.pdf_exporter import export_case_to_pdf
@@ -80,7 +81,7 @@ router = APIRouter(prefix="/exports", tags=["exports"])
 async def export_fhir(
     case_id: Annotated[str, Path(...)],
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_permission(Permission.EXPORT_DATA))],
     request_id: Annotated[str, Depends(get_request_id)],
 ):
     """Export case as FHIR Bundle."""
@@ -95,7 +96,7 @@ async def export_fhir(
 async def export_pdf(
     case_id: Annotated[str, Path(...)],
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_permission(Permission.EXPORT_DATA))],
 ):
     """Export case as PDF file."""
     case_dict = await _get_case_dict(session, case_id)
@@ -113,7 +114,7 @@ async def export_pdf(
 async def export_qr(
     case_id: Annotated[str, Path(...)],
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_permission(Permission.EXPORT_DATA))],
     request_id: Annotated[str, Depends(get_request_id)],
 ):
     """Export case as QR-encodable string."""
@@ -128,7 +129,7 @@ async def export_qr(
 async def export_bundle(
     case_id: Annotated[str, Path(...)],
     session: Annotated[AsyncSession, Depends(get_session)],
-    user: Annotated[dict, Depends(get_current_user)],
+    user: Annotated[dict, Depends(require_permission(Permission.EXPORT_DATA))],
 ):
     """Export compact ZIP bundle for exchange: case JSON, FHIR JSON, QR text, and PDF."""
     case_dict = await _get_case_dict(session, case_id)

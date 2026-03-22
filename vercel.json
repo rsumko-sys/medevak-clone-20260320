@@ -1,11 +1,31 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "cleanUrls": true,
-  "experimentalServices": {
-    "frontend": {
-      "entrypoint": "frontend",
-      "routePrefix": "/",
-      "framework": "nextjs"
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "out" }
+    },
+    {
+      "src": "backend/main.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "includeFiles": [
+          "backend/app/**",
+          "backend/migrations/**",
+          "backend/static/**",
+          "backend/requirements.txt"
+        ]
+      }
     }
-  }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "backend/main.py" },
+    { "src": "/health", "dest": "backend/main.py" },
+    { "src": "/startup-error", "dest": "backend/main.py" },
+    { "src": "/(.*)", "dest": "frontend/$1" }
+  ]
 }

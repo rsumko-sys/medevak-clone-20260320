@@ -1,6 +1,7 @@
 """JWT auth helpers."""
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import uuid
 
 import bcrypt
 from jose import JWTError, jwt
@@ -24,11 +25,13 @@ def create_access_token(data: dict[str, Any]) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_refresh_token(data: dict[str, Any]) -> str:
+def create_refresh_token(data: dict[str, Any]) -> tuple[str, str]:
+    """Returns (encoded_token, jti)."""
     to_encode = data.copy()
+    jti = str(uuid.uuid4())
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    to_encode.update({"exp": expire, "type": "refresh", "jti": jti})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM), jti
 
 
 def decode_token(token: str) -> dict[str, Any] | None:

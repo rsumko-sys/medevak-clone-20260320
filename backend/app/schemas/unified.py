@@ -1,4 +1,5 @@
 """Normalized Data Schemas."""
+import re
 from datetime import datetime
 from typing import Optional, List, Any, Literal
 from pydantic import BaseModel, Field, StrictBool, model_validator, ConfigDict
@@ -8,6 +9,14 @@ from app.core.config import ALLOW_GPS
 STR_SHORT = 100
 STR_MED = 200
 STR_LONG = 4000
+
+_HTML_TAGS_RE = re.compile(r'<[^>]+>')
+
+def _strip_html(value: str | None) -> str | None:
+    """Strip HTML/script tags from a string value."""
+    if value is None:
+        return None
+    return _HTML_TAGS_RE.sub('', value).strip()
 
 
 # ── INJURIES ─────────────────────────────────────────────────────────────
@@ -200,6 +209,12 @@ class CaseCreate(BaseModel):
     def validate_gps_policy(self):
         if not ALLOW_GPS and (self.geo_lat is not None or self.geo_lon is not None):
             raise ValueError("GPS coordinates are disabled by policy")
+        # Strip HTML from all free-text fields
+        for field in ("callsign", "full_name", "rank", "unit", "allergies",
+                      "incident_location", "mechanism_of_injury", "mechanism", "notes"):
+            val = getattr(self, field, None)
+            if isinstance(val, str):
+                setattr(self, field, _strip_html(val))
         return self
 
 
@@ -230,6 +245,12 @@ class CaseUpdate(BaseModel):
     def validate_gps_policy(self):
         if not ALLOW_GPS and (self.geo_lat is not None or self.geo_lon is not None):
             raise ValueError("GPS coordinates are disabled by policy")
+        # Strip HTML from all free-text fields
+        for field in ("callsign", "full_name", "rank", "unit", "allergies",
+                      "incident_location", "mechanism_of_injury", "mechanism", "notes"):
+            val = getattr(self, field, None)
+            if isinstance(val, str):
+                setattr(self, field, _strip_html(val))
         return self
 
 

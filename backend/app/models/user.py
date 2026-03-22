@@ -1,10 +1,10 @@
 """User model for auth."""
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean
+from sqlalchemy import Column, String, DateTime, Boolean, Integer
 
 from app.core.database import Base
 
-VALID_ROLES = {"admin", "medic", "viewer"}
+VALID_ROLES = {"admin", "medic", "viewer", "personnel"}
 
 
 class User(Base):
@@ -16,5 +16,6 @@ class User(Base):
     role = Column(String, nullable=False, default="medic")
     unit = Column(String, nullable=True)  # Assigned unit for ABAC
     is_active = Column(Boolean, default=True)  # Session validation
+    token_version = Column(Integer, default=0, nullable=False)  # bumped by logout-all
     created_at = Column(DateTime, default=datetime.utcnow)
 

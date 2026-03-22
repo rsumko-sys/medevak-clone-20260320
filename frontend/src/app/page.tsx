@@ -45,7 +45,7 @@ export default function HomePage() {
               </li>
             </ul>
 
-            <Link href="/battlefield" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-900/50 text-white font-bold tracking-widest text-sm transition-colors w-48">
+            <Link href="/battlefield" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-900/30 hover:bg-red-900/50 border border-red-900/50 text-white font-bold tracking-widest text-sm transition-colors w-48 mx-auto">
               ВІДКРИТИ →
             </Link>
           </div>
@@ -81,7 +81,7 @@ export default function HomePage() {
               </li>
             </ul>
 
-            <Link href="/command" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#22252b] hover:bg-[#2a2e35] border border-[#333740] text-gray-300 font-bold tracking-widest text-sm transition-colors w-48">
+            <Link href="/command" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#22252b] hover:bg-[#2a2e35] border border-[#333740] text-gray-300 font-bold tracking-widest text-sm transition-colors w-48 mx-auto">
               ВІДКРИТИ →
             </Link>
           </div>
@@ -117,7 +117,7 @@ export default function HomePage() {
               </li>
             </ul>
 
-            <Link href="/field" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-900/50 text-white font-bold tracking-widest text-sm transition-colors w-48">
+            <Link href="/field" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-900/50 text-white font-bold tracking-widest text-sm transition-colors w-48 mx-auto">
               ВІДКРИТИ →
             </Link>
           </div>

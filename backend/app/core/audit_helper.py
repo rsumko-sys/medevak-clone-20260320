@@ -13,6 +13,8 @@ async def log_audit(
     user_id: str | None = None,
     old_values=None,
     new_values=None,
+    client_ip: str | None = None,
+    device_id: str | None = None,
 ):
     """Append audit log entry."""
     entry = AuditLog(
@@ -23,5 +25,7 @@ async def log_audit(
         user_id=user_id,
         old_values=old_values,
         new_values=new_values,
+        client_ip=client_ip,
+        device_id=device_id,
     )
     session.add(entry)
