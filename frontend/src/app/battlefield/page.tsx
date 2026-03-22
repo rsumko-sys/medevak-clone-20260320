@@ -431,7 +431,7 @@ export default function BattlefieldPage() {
           </Link>
           <div>
             <h1 className="text-xl font-bold tracking-widest text-red-600 uppercase">БОЙОВИЙ РЕЖИМ</h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-gray-500">Вовки Да Вінчі · Мед. Служба «УЛЬФ»</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-gray-500">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

@@ -7,9 +7,9 @@ export default function HomePage() {
       
       {/* Header */}
       <div className="text-center mb-16 space-y-2">
-        <p className="wolf-title text-gray-500 tracking-[0.3em]">ВОВКИ ДА ВІНЧІ</p>
+        <p className="wolf-title text-gray-500 tracking-[0.3em]">АЗОВ</p>
         <h1 className="text-3xl md:text-5xl font-bold tracking-widest text-white">МЕДИЧНА СЛУЖБА</h1>
-        <p className="wolf-title text-gray-400 tracking-[0.2em]">«УЛЬФ» • CCRM</p>
+        <p className="wolf-title text-gray-400 tracking-[0.2em]">МЕДИЧНИЙ ПІДРОЗДІЛ • CCRM</p>
       </div>
 
       {/* Main Cards */}

@@ -37,7 +37,7 @@ export default function Sidebar() {
       {/* Logo Area */}
       <div className="p-6 border-b border-[#1a1d24]">
         <h1 className="text-xl font-bold tracking-widest leading-tight">КОМАНДНИЙ ЦЕНТР</h1>
-        <p className="text-[10px] text-gray-500 tracking-widest mt-1 uppercase">ВОВКИ ДА ВІНЧІ • «УЛЬФ»</p>
+        <p className="text-[10px] text-gray-500 tracking-widest mt-1 uppercase">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
       </div>
 
       {/* Navigation */}

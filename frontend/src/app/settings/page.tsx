@@ -7,7 +7,7 @@ import { getSecurityPolicySettings, type SecurityPolicySettings } from '@/lib/ap
 
 export default function SettingsPage() {
   const toast = useToast()
-  const [unitName, setUnitName] = useState('Вовки Да Вінчі • «УЛЬФ»')
+  const [unitName, setUnitName] = useState('АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ')
   const [deviceId, setDeviceId] = useState('DEV-ALPHA-01')
   const [isSyncEnabled, setIsSyncEnabled] = useState(true)
   const [whisperApiKey, setWhisperApiKey] = useState('')
