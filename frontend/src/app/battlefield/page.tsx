@@ -502,6 +502,38 @@ export default function BattlefieldPage() {
         ))}
       </div>
 
+      {/* CPR / cardiac stopwatch — always visible, centered between tabs and content */}
+      <div className="flex justify-center px-4 pt-3 pb-1 bg-[#0b0d10]">
+        <button
+          onClick={handleSwClick}
+          className={`w-full max-w-2xl flex flex-col items-center justify-center py-4 rounded-xl border-2 font-mono transition-all select-none ${
+            swState === 'running'
+              ? 'bg-red-950/60 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.35)]'
+              : swState === 'stopped'
+              ? 'bg-[#1a1d24] border-yellow-500'
+              : 'bg-[#14171b] border-[#2a2f3a] hover:border-red-700'
+          }`}
+          title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
+        >
+          <span className={`text-[9px] uppercase tracking-[0.3em] font-bold mb-1 ${
+            swState === 'running' ? 'text-red-400' : swState === 'stopped' ? 'text-yellow-400' : 'text-gray-600'
+          }`}>
+            {swState === 'idle' ? '▶ КПР / СЕКУНДОМІР' : swState === 'running' ? '█ ЗУПИНИТИ' : '↺ СКИНУТИ'}
+          </span>
+          <span className={`text-5xl font-black tabular-nums tracking-widest ${
+            swState === 'running' ? 'text-red-300' : swState === 'stopped' ? 'text-yellow-300' : 'text-gray-600'
+          }`}>
+            {formatSw(swMs)}
+          </span>
+          {swState === 'running' && (
+            <span className="mt-1 text-[8px] text-red-500/60 uppercase tracking-[0.2em] animate-pulse">РЕАНІМАЦІЯ АКТИВНА</span>
+          )}
+          {swState === 'stopped' && (
+            <span className="mt-1 text-[8px] text-yellow-500/60 uppercase tracking-[0.2em]">НАТИСНІТИ ЩОБ СКИНУТИ</span>
+          )}
+        </button>
+      </div>
+
       <main className="flex-1 p-4 lg:p-6 overflow-y-auto w-full max-w-7xl mx-auto pb-32 pb-safe-area">
         {activeTab === 'S1' && (
           <div className="max-w-3xl mx-auto space-y-6">
@@ -744,42 +776,7 @@ export default function BattlefieldPage() {
           </div>
         )}
 
-        {activeTab === 'S3' && (
-          <div className="space-y-6">
-            {/* CPR Stopwatch — centered above MARCH */}
-            <div className="flex flex-col items-center justify-center">
-              <button
-                onClick={handleSwClick}
-                className={`w-full max-w-lg flex flex-col items-center justify-center py-6 rounded-xl border-2 font-mono transition-all select-none ${
-                  swState === 'running'
-                    ? 'bg-red-950/60 border-red-500 shadow-[0_0_40px_rgba(220,38,38,0.4)]'
-                    : swState === 'stopped'
-                    ? 'bg-[#1a1d24] border-yellow-500'
-                    : 'bg-[#14171b] border-[#2a2f3a] hover:border-red-700'
-                }`}
-                title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
-              >
-                <span className={`text-[10px] uppercase tracking-[0.3em] font-bold mb-2 ${
-                  swState === 'running' ? 'text-red-400' : swState === 'stopped' ? 'text-yellow-400' : 'text-gray-600'
-                }`}>
-                  {swState === 'idle' ? '▶ КПР / СЕКУНДОМІР' : swState === 'running' ? '█ ЗУПИНИТИ' : '↺ СКИНУТИ'}
-                </span>
-                <span className={`text-6xl font-black tabular-nums tracking-widest ${
-                  swState === 'running' ? 'text-red-300' : swState === 'stopped' ? 'text-yellow-300' : 'text-gray-500'
-                }`}>
-                  {formatSw(swMs)}
-                </span>
-                {swState === 'running' && (
-                  <span className="mt-2 text-[9px] text-red-500/70 uppercase tracking-[0.2em] animate-pulse">РЕАНІМАЦІЯ АКТИВНА</span>
-                )}
-                {swState === 'stopped' && (
-                  <span className="mt-2 text-[9px] text-yellow-500/70 uppercase tracking-[0.2em]">НАТИСНІТИ ЩОБ СКИНУТИ</span>
-                )}
-              </button>
-            </div>
-            <MarchForm data={marchData} onChange={setMarchData} />
-          </div>
-        )}
+        {activeTab === 'S3' && <MarchForm data={marchData} onChange={setMarchData} />}
         
         {activeTab === 'S4' && (
           <VitalsForm 
