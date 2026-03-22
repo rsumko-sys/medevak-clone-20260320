@@ -12,6 +12,7 @@ from app.core.sync_helper import enqueue_sync
 from app.core.utils import envelope
 from app.models.blood import BloodInventory, BloodTransaction
 from app.models.cases import Case
+from app.models.events import Event
 from app.schemas.blood import (
     BLOOD_TYPES,
     BloodInventoryAdjustRequest,
@@ -131,6 +132,24 @@ async def adjust_blood_inventory(
         },
         user.get("device_id"),
     )
+
+    # ── Case timeline event when blood is linked to a case ────────────────
+    if body.case_id:
+        event_type = "BLOOD_USED" if body.delta < 0 else "BLOOD_RESTOCKED"
+        case_evt = Event(
+            id=str(uuid.uuid4()),
+            case_id=body.case_id,
+            event_type="SYSTEM",
+            actor_id=user.get("sub"),
+            payload={
+                "action": event_type,
+                "blood_type": normalized_type,
+                "delta": body.delta,
+                "reason": body.reason,
+                "quantity_after": new_quantity,
+            },
+        )
+        session.add(case_evt)
 
     await session.commit()
     await session.refresh(inventory)

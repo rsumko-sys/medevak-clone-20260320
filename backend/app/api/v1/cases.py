@@ -36,6 +36,19 @@ limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
+# Allowed status transitions — adjacent moves only.
+# Terminal states (CLOSED, DECEASED, VOIDED) cannot be changed.
+ALLOWED_TRANSITIONS: dict[str, list[str]] = {
+    "ACTIVE":         ["STABILIZING", "AWAITING_EVAC", "CLOSED", "DECEASED", "VOIDED"],
+    "STABILIZING":    ["ACTIVE", "AWAITING_EVAC", "CLOSED", "DECEASED", "VOIDED"],
+    "AWAITING_EVAC":  ["ACTIVE", "IN_TRANSPORT", "CLOSED", "DECEASED", "VOIDED"],
+    "IN_TRANSPORT":   ["HANDED_OFF", "AWAITING_EVAC"],
+    "HANDED_OFF":     ["CLOSED"],
+    "CLOSED":         [],
+    "DECEASED":       [],
+    "VOIDED":         [],
+}
+
 def _apply_body_to_case(case: Case, body: CaseCreate | CaseUpdate) -> None:
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(case, field, value)
@@ -157,10 +170,32 @@ async def update_case(
     user_unit = user.get("unit", "")
     if case.unit != user_unit:
         raise HTTPException(status_code=403, detail="Unauthorized: Case is in different unit")
-        
+
+    # ── State machine validation ──────────────────────────────────────────
+    new_status = body.case_status if body.model_fields_set and "case_status" in body.model_fields_set else None
+    old_status = case.case_status
+    if new_status is not None and new_status != old_status:
+        allowed = ALLOWED_TRANSITIONS.get(old_status or "ACTIVE", [])
+        if new_status not in allowed:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Invalid status transition: {old_status} → {new_status}. Allowed: {allowed}",
+            )
+
     old_values = {k: getattr(case, k, None) for k in CaseUpdate.model_fields}
     _apply_body_to_case(case, body)
-    
+
+    # ── Auto system event on status change ────────────────────────────────
+    if new_status is not None and new_status != old_status:
+        evt = Event(
+            id=str(uuid.uuid4()),
+            case_id=case_id,
+            event_type="SYSTEM",
+            actor_id=user.get("sub"),
+            payload={"action": "STATUS_CHANGE", "from": old_status, "to": new_status},
+        )
+        session.add(evt)
+
     await log_audit(session, "cases", case_id, "update", user.get("sub"), old_values=old_values, new_values=body.model_dump(exclude_unset=True))
     await enqueue_sync(session, "case", case_id, "update", {"id": case_id}, user.get("device_id"))
     
