@@ -471,21 +471,6 @@ export default function BattlefieldPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* CPR / cardiac stopwatch */}
-          <button
-            onClick={handleSwClick}
-            className={`flex flex-col items-center justify-center h-12 px-3 rounded-md border font-mono font-bold text-xs tracking-widest transition-all ${
-              swState === 'running'
-                ? 'bg-red-950 border-red-500 text-red-300 shadow-[0_0_12px_rgba(220,38,38,0.5)] animate-pulse'
-                : swState === 'stopped'
-                ? 'bg-[#1a1d24] border-yellow-600 text-yellow-400'
-                : 'bg-[#1a1d24] border-[#2a2f3a] text-gray-500 hover:text-white hover:border-red-700'
-            }`}
-            title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
-          >
-            <span className="text-[8px] uppercase tracking-[0.15em] mb-0.5 opacity-60">КПР</span>
-            <span className="text-sm tabular-nums">{formatSw(swMs)}</span>
-          </button>
           <button
             onClick={startNewDraft}
             className="h-12 px-4 rounded-md border border-[#2a2f3a] bg-[#1a1d24] text-white font-bold text-sm"
@@ -759,7 +744,42 @@ export default function BattlefieldPage() {
           </div>
         )}
 
-        {activeTab === 'S3' && <MarchForm data={marchData} onChange={setMarchData} />}
+        {activeTab === 'S3' && (
+          <div className="space-y-6">
+            {/* CPR Stopwatch — centered above MARCH */}
+            <div className="flex flex-col items-center justify-center">
+              <button
+                onClick={handleSwClick}
+                className={`w-full max-w-lg flex flex-col items-center justify-center py-6 rounded-xl border-2 font-mono transition-all select-none ${
+                  swState === 'running'
+                    ? 'bg-red-950/60 border-red-500 shadow-[0_0_40px_rgba(220,38,38,0.4)]'
+                    : swState === 'stopped'
+                    ? 'bg-[#1a1d24] border-yellow-500'
+                    : 'bg-[#14171b] border-[#2a2f3a] hover:border-red-700'
+                }`}
+                title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
+              >
+                <span className={`text-[10px] uppercase tracking-[0.3em] font-bold mb-2 ${
+                  swState === 'running' ? 'text-red-400' : swState === 'stopped' ? 'text-yellow-400' : 'text-gray-600'
+                }`}>
+                  {swState === 'idle' ? '▶ КПР / СЕКУНДОМІР' : swState === 'running' ? '█ ЗУПИНИТИ' : '↺ СКИНУТИ'}
+                </span>
+                <span className={`text-6xl font-black tabular-nums tracking-widest ${
+                  swState === 'running' ? 'text-red-300' : swState === 'stopped' ? 'text-yellow-300' : 'text-gray-500'
+                }`}>
+                  {formatSw(swMs)}
+                </span>
+                {swState === 'running' && (
+                  <span className="mt-2 text-[9px] text-red-500/70 uppercase tracking-[0.2em] animate-pulse">РЕАНІМАЦІЯ АКТИВНА</span>
+                )}
+                {swState === 'stopped' && (
+                  <span className="mt-2 text-[9px] text-yellow-500/70 uppercase tracking-[0.2em]">НАТИСНІТИ ЩОБ СКИНУТИ</span>
+                )}
+              </button>
+            </div>
+            <MarchForm data={marchData} onChange={setMarchData} />
+          </div>
+        )}
         
         {activeTab === 'S4' && (
           <VitalsForm 
