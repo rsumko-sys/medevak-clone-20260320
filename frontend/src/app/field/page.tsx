@@ -48,10 +48,10 @@ const DEFAULT_POSITIONS: Position[] = [
 ]
 
 const DROP_STATUS_CONFIG: Record<DropStatus, { label: string; dot: string; text: string }> = {
-  pending:  { label: 'ПРИЙНЯТО', dot: 'bg-yellow-500',  text: 'text-yellow-400' },
-  accepted: { label: 'В РОБОТІ', dot: 'bg-blue-500',    text: 'text-blue-400' },
-  flying:   { label: 'ЛЕТИТЬ',   dot: 'bg-orange-500',  text: 'text-orange-400' },
-  done:     { label: 'ВИКОНАНО', dot: 'bg-green-500',   text: 'text-green-400' },
+  pending:  { label: 'ПРИЙНЯТО', dot: 'bg-[#7a5c1e]',  text: 'text-[#c49a3c]' },
+  accepted: { label: 'В РОБОТІ', dot: 'bg-[#1e4a7a]',  text: 'text-[#5a8ec4]' },
+  flying:   { label: 'ЛЕТИТЬ',   dot: 'bg-[#7a3e1e]',  text: 'text-[#c47a3c]' },
+  done:     { label: 'ВИКОНАНО', dot: 'bg-[#1e6b3f]',  text: 'text-[#5aad76]' },
 }
 
 function supplyLevel(val: number): 'ok' | 'low' | 'critical' {
@@ -70,13 +70,13 @@ function posAlert(pos: Position): 'ok' | 'low' | 'critical' {
 }
 
 const levelColor: Record<string, string> = {
-  ok: 'bg-green-500', low: 'bg-yellow-500', critical: 'bg-red-500',
+  ok: 'bg-[#1e6b3f]', low: 'bg-[#7a5c1e]', critical: 'bg-[#7a2222]',
 }
 const levelText: Record<string, string> = {
-  ok: 'text-green-400', low: 'text-yellow-400', critical: 'text-red-400',
+  ok: 'text-[#5aad76]', low: 'text-[#c49a3c]', critical: 'text-[#d94040]',
 }
 const alertBorder: Record<string, string> = {
-  ok: 'border-[#2b2b2b]', low: 'border-yellow-900/50', critical: 'border-red-900/60',
+  ok: 'border-[#2b2b2b]', low: 'border-[#4a3a12]', critical: 'border-[#4a1a1a]',
 }
 
 export default function FieldPage() {
@@ -176,7 +176,7 @@ export default function FieldPage() {
                 const alert = posAlert(pos)
                 const isExpanded = expandedPos === pos.id
                 return (
-                  <div key={pos.id} className={`bg-[#131518] border ${alertBorder[alert]} rounded-md overflow-hidden`}>
+                  <div key={pos.id} className={`bg-[#17191e] border ${alertBorder[alert]} rounded-md overflow-hidden`}>
 
                     {/* Card header — click to expand */}
                     <div
@@ -192,7 +192,7 @@ export default function FieldPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {pos.status === 'silent' && (
-                          <span className="text-[9px] text-red-500 font-mono tracking-widest bg-red-900/20 border border-red-900/40 px-2 py-0.5 rounded">МОВЧИТЬ</span>
+                          <span className="text-[9px] text-[#d94040] font-mono tracking-widest bg-[#2a1414] border border-[#4a1a1a] px-2 py-0.5 rounded">МОВЧИТЬ</span>
                         )}
                         <span className={`text-[11px] font-bold tracking-widest ${levelText[alert]}`}>
                           {alert === 'ok' ? 'ОК' : alert === 'low' ? 'МАЛО' : 'КРИТИЧНО'}
@@ -204,14 +204,14 @@ export default function FieldPage() {
                     <div className="px-4 pb-4 grid grid-cols-3 gap-x-3 gap-y-2">
                       {(Object.keys(SUPPLY_LABELS) as SupplyKey[]).map(key => (
                         <div key={key}>
-                          <div className="text-[9px] text-gray-600 font-mono uppercase mb-0.5">{SUPPLY_LABELS[key]}</div>
-                          <div className="h-1.5 bg-[#1e222a] rounded-full overflow-hidden">
+                          <div className="text-[10px] text-gray-400 font-mono uppercase mb-0.5 tracking-wide">{SUPPLY_LABELS[key]}</div>
+                          <div className="h-2 bg-[#252830] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${levelColor[supplyLevel(pos.supplies[key])]}`}
                               style={{ width: `${(pos.supplies[key] / MAX) * 100}%` }}
                             />
                           </div>
-                          <div className={`text-[9px] font-mono mt-0.5 ${levelText[supplyLevel(pos.supplies[key])]}`}>
+                          <div className={`text-xs font-mono font-semibold mt-0.5 ${levelText[supplyLevel(pos.supplies[key])]}`}>
                             {pos.supplies[key]}/{MAX}
                           </div>
                         </div>
