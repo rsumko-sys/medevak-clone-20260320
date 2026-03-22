@@ -1,6 +1,9 @@
 # BACKLOG
 
-Відкрито після `v1.0-smoke` — 2026-03-22.
+Відкрито після `v1.0-smoke` — 2026-03-22.  
+Оновлено після `v1.2-neon` — 2026-03-22.
+
+**Поточний канон:** `v1.2-neon` (`f3cc626`) — Neon PostgreSQL = source of truth.
 
 ---
 
@@ -71,10 +74,48 @@ auth.spec.ts        — logout → /login, no protected routes accessible
 
 ---
 
+## #4 — Прибрати cold-start guard зі smoke_prod.py (техборг)
+
+**Стан зараз:**  
+`smoke_prod.py` має auto-register guard і mid-test re-register block — костилі під ephemeral SQLite.  
+З Neon ці гілки не тригеряться, але засмічують код і маскують реальні помилки.
+
+**Дія:** видалити або зробити опціональним `--force-init` флаг; зберегти лише базовий 401-guard як safety net.  
+**Файли:** `smoke_prod.py`
+
+---
+
+## #5 — Винести `alembic upgrade head` зі старту апки в release step (архітектура)
+
+**Стан зараз:**  
+`main.py` lifespan викликає `alembic upgrade head` при кожному cold start на PostgreSQL.  
+Це працює, але: (а) додає ~200–500ms до cold start, (б) Alembic не призначений для запуску в async event loop lifespan.
+
+**Правильний підхід:** окремий release command у Nixpacks/Procfile — `python -m alembic upgrade head` — що виконується **один раз** перед запуском uvicorn.
+
+**Дія:**  
+1. Додати в `backend/Procfile` або `nixpacks.toml` release step  
+2. Зробити lifespan PostgreSQL-гілку no-op (або залишити як fallback з `--no-fail`)  
+**Файли:** `backend/main.py`, `backend/Procfile`, `backend/nixpacks.toml`
+
+---
+
+## #6 — Оновити `run.md` і `architecture.md` під Neon як source of truth
+
+**Стан зараз:**  
+Документація ще описує SQLite як робочу БД, не згадує Neon.  
+**Дія:** оновити секції про DATABASE_URL, описати Neon як єдину production БД, прибрати згадки про `/tmp/medevak.db` з prod-flow.  
+**Файли:** `docs/run.md`, `docs/architecture.md`
+
+---
+
 ## Пріоритетність
 
 | Пріоритет | Item | Блокер |
 |-----------|------|--------|
-| 🔴 P0 | #2 Persistent DB | Так — без цього prod непридатний |
+| ✅ ЗАКРИТО | #2 Persistent DB | Neon verified, v1.2-neon |
 | 🟡 P1 | #1 Access token revocation | Ні — TTL=5хв як проміжне рішення |
+| 🟡 P1 | #5 Alembic → release step | Ні — поточне рішення production-safe |
+| 🟢 P2 | #4 Cold-start guard у smoke | Ні — косметика |
+| 🟢 P2 | #6 Docs update (Neon) | Ні — актуалізація |
 | 🟢 P2 | #3 UI E2E tests | Ні — ручна перевірка поки достатня |

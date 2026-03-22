@@ -2,6 +2,10 @@
 
 Централізована документація проекту CCRM (Combat Casualty Record Module).
 
+> **Canonical baseline:** `v1.2-neon` (`f3cc626`) — 2026-03-22  
+> **DB:** Neon PostgreSQL (source of truth). Ephemeral SQLite — тільки local dev.  
+> **Smoke:** 13/13 verified on PostgreSQL.
+
 ---
 
 ## Навігація
