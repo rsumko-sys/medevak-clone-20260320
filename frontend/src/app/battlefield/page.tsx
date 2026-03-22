@@ -64,6 +64,42 @@ export default function BattlefieldPage() {
   const [quickProcedures, setQuickProcedures] = useState<string[]>([])
   const [pendingVoiceEvents, setPendingVoiceEvents] = useState<string[]>([])
 
+  // CPR / cardiac stopwatch — 1: start, 2: stop, 3: reset
+  const [swState, setSwState] = useState<'idle' | 'running' | 'stopped'>('idle')
+  const [swMs, setSwMs] = useState(0)
+  const swStartRef = useRef<number>(0)
+  const swRafRef = useRef<number>(0)
+
+  const tickSw = () => {
+    setSwMs(performance.now() - swStartRef.current)
+    swRafRef.current = requestAnimationFrame(tickSw)
+  }
+
+  const handleSwClick = () => {
+    if (swState === 'idle') {
+      swStartRef.current = performance.now()
+      swRafRef.current = requestAnimationFrame(tickSw)
+      setSwState('running')
+    } else if (swState === 'running') {
+      cancelAnimationFrame(swRafRef.current)
+      setSwState('stopped')
+    } else {
+      setSwMs(0)
+      setSwState('idle')
+    }
+  }
+
+  useEffect(() => () => cancelAnimationFrame(swRafRef.current), [])
+
+  const formatSw = (ms: number) => {
+    const totalMs = Math.floor(ms)
+    const h = Math.floor(totalMs / 3600000)
+    const m = Math.floor((totalMs % 3600000) / 60000)
+    const s = Math.floor((totalMs % 60000) / 1000)
+    const cs = Math.floor((totalMs % 1000) / 10)
+    return `${h > 0 ? String(h).padStart(2,'0') + ':' : ''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`
+  }
+
   const tabIds = TABS.map((t) => t.id)
   const currentTabIndex = tabIds.indexOf(activeTab)
   const canGoPrev = currentTabIndex > 0
@@ -435,6 +471,21 @@ export default function BattlefieldPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* CPR / cardiac stopwatch */}
+          <button
+            onClick={handleSwClick}
+            className={`flex flex-col items-center justify-center h-12 px-3 rounded-md border font-mono font-bold text-xs tracking-widest transition-all ${
+              swState === 'running'
+                ? 'bg-red-950 border-red-500 text-red-300 shadow-[0_0_12px_rgba(220,38,38,0.5)] animate-pulse'
+                : swState === 'stopped'
+                ? 'bg-[#1a1d24] border-yellow-600 text-yellow-400'
+                : 'bg-[#1a1d24] border-[#2a2f3a] text-gray-500 hover:text-white hover:border-red-700'
+            }`}
+            title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
+          >
+            <span className="text-[8px] uppercase tracking-[0.15em] mb-0.5 opacity-60">КПР</span>
+            <span className="text-sm tabular-nums">{formatSw(swMs)}</span>
+          </button>
           <button
             onClick={startNewDraft}
             className="h-12 px-4 rounded-md border border-[#2a2f3a] bg-[#1a1d24] text-white font-bold text-sm"
