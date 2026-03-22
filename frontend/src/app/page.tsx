@@ -9,7 +9,7 @@ export default function HomePage() {
       <div className="text-center mb-16 space-y-2">
         <p className="wolf-title text-gray-500 tracking-[0.3em]">АЗОВ</p>
         <h1 className="text-3xl md:text-5xl font-bold tracking-widest text-white">МЕДИЧНА СЛУЖБА</h1>
-        <p className="wolf-title text-gray-400 tracking-[0.2em]">МЕДИЧНИЙ ПІДРОЗДІЛ • CCRM</p>
+        <p className="wolf-title text-gray-400 tracking-[0.3em]">CCRM</p>
       </div>
 
       {/* Main Cards */}

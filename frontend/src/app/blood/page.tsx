@@ -2,14 +2,44 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FlaskConical, Activity, Droplet, ArrowLeft } from 'lucide-react'
+import { FlaskConical, Activity, Droplet, ArrowLeft, RefreshCw } from 'lucide-react'
 import { listCases } from '@/lib/api'
 import { CaseItem } from '@/lib/types'
 import BloodInventory from '@/components/BloodInventory'
+import { useToast } from '@/components/Toast'
 
 export default function BloodPage() {
+  const toast = useToast()
   const [cases, setCases] = useState<CaseItem[]>([])
   const [loading, setLoading] = useState(true)
+
+  type BloodTypeData = { count: number; min: number; status: string }
+  const INIT_INVENTORY: Record<string, BloodTypeData> = {
+    'O+ (O(I) Rh+)':      { count: 14, min: 10, status: 'ok' },
+    'O- (O(I) Rh-)':      { count: 3,  min: 8,  status: 'critical' },
+    'A+ (A(II) Rh+)':     { count: 12, min: 8,  status: 'ok' },
+    'A- (A(II) Rh-)':     { count: 2,  min: 5,  status: 'warning' },
+    'B+ (B(III) Rh+)':    { count: 8,  min: 5,  status: 'ok' },
+    'B- (B(III) Rh-)':    { count: 1,  min: 2,  status: 'warning' },
+    'AB+ (AB(IV) Rh+)':   { count: 5,  min: 2,  status: 'ok' },
+    'AB- (AB(IV) Rh-)':   { count: 0,  min: 1,  status: 'critical' },
+    'Whole Blood LTOWB':  { count: 4,  min: 10, status: 'critical' },
+  }
+  const [inventory, setInventory] = useState<Record<string, BloodTypeData>>(INIT_INVENTORY)
+
+  function updateInventory(type: string, delta: number) {
+    setInventory(prev => {
+      const entry = prev[type]
+      if (!entry) return prev
+      const newCount = Math.max(0, entry.count + delta)
+      const newStatus = newCount < entry.min * 0.2 ? 'critical' : newCount < entry.min ? 'warning' : 'ok'
+      return { ...prev, [type]: { ...entry, count: newCount, status: newStatus } }
+    })
+  }
+
+  function syncBlood() {
+    toast.success('Дані крові синхронізовано')
+  }
 
   useEffect(() => {
     async function load() {
@@ -25,37 +55,29 @@ export default function BloodPage() {
     load()
   }, [])
 
-  // Calculate generic mock inventory for visual fullness
-  const inventory = {
-    'O+ (O(I) Rh+)': { count: 14, min: 10, status: 'ok' },
-    'O- (O(I) Rh-)': { count: 3, min: 8, status: 'critical' },
-    'A+ (A(II) Rh+)': { count: 12, min: 8, status: 'ok' },
-    'A- (A(II) Rh-)': { count: 2, min: 5, status: 'warning' },
-    'B+ (B(III) Rh+)': { count: 8, min: 5, status: 'ok' },
-    'B- (B(III) Rh-)': { count: 1, min: 2, status: 'warning' },
-    'AB+ (AB(IV) Rh+)': { count: 5, min: 2, status: 'ok' },
-    'AB- (AB(IV) Rh-)': { count: 0, min: 1, status: 'critical' },
-    'Whole Blood LTOWB': { count: 4, min: 10, status: 'critical' },
-  }
-
-  // Patients who need blood mapping (Mock logic: ANY IMMEDIATE case or actively bleeding case, here mapped generically to IMMEDIATE)
+  // Patients who need blood mapping
   const patientsNeedingBlood = cases.filter(c => c.triage_code === 'IMMEDIATE' && ['ACTIVE', 'STABILIZING'].includes(c.case_status))
 
   return (
     <div className="flex-1 p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-2">
-        <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold tracking-widest text-white uppercase">КРОВ</h1>
-          <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Інвентаризація запасів крові</p>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3">
+          <Link href="/command" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold tracking-widest text-white uppercase">КРОВ</h1>
+            <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Інвентаризація запасів крові</p>
+          </div>
         </div>
+        <button onClick={syncBlood} className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400 hover:text-white uppercase border border-[#262a30] px-3 py-1.5 rounded bg-[#1a1d24] transition-colors">
+          <RefreshCw className="w-3 h-3" /> СИНХРОНІЗУВАТИ
+        </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Inventory Column */}
         <div className="lg:col-span-2">
-          <BloodInventory inventory={inventory} />
+          <BloodInventory inventory={inventory} onUpdate={updateInventory} />
         </div>
 
         {/* Patients Column */}
