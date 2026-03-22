@@ -24,12 +24,17 @@ export default function Topbar() {
   return (
     <header className="h-16 shrink-0 border-b border-borderContent bg-background flex items-center justify-between px-6 sticky top-0 z-10">
       <div className="flex items-center gap-4">
-        <Link href="/" className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none" title="На головну">
+        <button
+          onClick={() => router.back()}
+          className="p-2 rounded-md bg-[#1a1d24] border border-[#2a2f3a] text-gray-400 hover:text-white hover:bg-[#252a33] transition-colors outline-none focus:outline-none"
+          title="Назад"
+          aria-label="Назад"
+        >
           <ArrowLeft className="w-4 h-4" />
-        </Link>
+        </button>
         <div>
           <h2 className="text-sm font-bold tracking-widest text-white uppercase">МЕДЕВАК СИСТЕМА</h2>
-          <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">{currentDate}</p>
+          <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">{currentDate}</p>
         </div>
       </div>
 
@@ -39,7 +44,7 @@ export default function Topbar() {
         </Link>
         <div className="px-3 py-1.5 border border-borderContent bg-panel rounded-md flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[10px] tracking-widest text-gray-400 uppercase font-bold">ОНЛАЙН</span>
+          <span className="text-xs tracking-widest text-gray-400 uppercase font-bold">ОНЛАЙН</span>
         </div>
         <button
           onClick={handleLogout}

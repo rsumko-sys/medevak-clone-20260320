@@ -477,7 +477,7 @@ export default function BattlefieldPage() {
           </Link>
           <div>
             <h1 className="text-xl font-bold tracking-widest text-red-600 uppercase">БОЙОВИЙ РЕЖИМ</h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-mono text-gray-500">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
+            <p className="text-xs uppercase tracking-[0.2em] font-mono text-gray-500">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
           </div>
         </div>
 
@@ -524,7 +524,7 @@ export default function BattlefieldPage() {
         </div>
       </header>
       {recordingLabel && (
-        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-[0.1em] text-red-300 bg-[#181013] border-b border-[#3a1f24]">
+        <div className="px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-red-300 bg-[#181013] border-b border-[#3a1f24]">
           {recordingLabel}
         </div>
       )}
@@ -546,7 +546,7 @@ export default function BattlefieldPage() {
         {activeTab === 'S1' && (
           <div className="max-w-3xl mx-auto space-y-6">
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md">
-               <h2 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">ІДЕНТИФІКАЦІЯ</h2>
+               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">ІДЕНТИФІКАЦІЯ</h2>
               <div className="space-y-4">
                 <input 
                   type="text" 
@@ -576,7 +576,7 @@ export default function BattlefieldPage() {
             </section>
 
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md">
-               <h2 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">СОРТУВАННЯ</h2>
+               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">СОРТУВАННЯ</h2>
                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                  {[
                    { code: 'IMMEDIATE', label: 'НЕВІДКЛАДНО', cls: 'bg-red-900/20 border-red-500 text-red-500 hover:bg-red-900/40' },
@@ -588,7 +588,7 @@ export default function BattlefieldPage() {
                    <button
                      key={t.code}
                      onClick={() => setTriageCat(t.code as TriageCategory)}
-                     className={`flex flex-col items-center justify-center p-4 border-2 rounded-md font-bold text-[10px] tracking-widest uppercase transition-all ${triageCat === t.code ? t.cls + ' shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-[#181b21] border-[#262a30] text-gray-600'}`}
+                     className={`flex flex-col items-center justify-center p-4 border-2 rounded-md font-bold text-xs tracking-widest uppercase transition-all ${triageCat === t.code ? t.cls + ' shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-[#181b21] border-[#262a30] text-gray-600'}`}
                    >
                      {t.label}
                    </button>
@@ -597,7 +597,7 @@ export default function BattlefieldPage() {
             </section>
 
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md">
-               <h2 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">МЕХАНІЗМ ТРАВМИ</h2>
+               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-bold mb-4">МЕХАНІЗМ ТРАВМИ</h2>
                <div className="flex flex-wrap gap-2">
                  {[
                    { code: 'BLAST', label: 'МІННО-ВИБУХОВА' },
@@ -619,7 +619,7 @@ export default function BattlefieldPage() {
 
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md flex items-center justify-between">
                <div>
-                 <h2 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-1">ТУРНІКЕТ НАКЛАДЕНО?</h2>
+                 <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-bold mb-1">ТУРНІКЕТ НАКЛАДЕНО?</h2>
                  <p className="text-xs text-gray-600 font-mono">Швидка позначка для первинного огляду</p>
                </div>
                <div className="flex gap-2">
@@ -630,7 +630,7 @@ export default function BattlefieldPage() {
 
             <section className="wolf-panel p-6 border border-[#262a30] bg-[#14171b] rounded-md grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">ЧАС ПОРАНЕННЯ</label>
+                <label className="block text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">ЧАС ПОРАНЕННЯ</label>
                 <input
                   type="datetime-local"
                   value={injuryTime}
@@ -639,7 +639,7 @@ export default function BattlefieldPage() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">ЧАС ТУРНІКЕТУ</label>
+                <label className="block text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">ЧАС ТУРНІКЕТУ</label>
                 <input
                   type="datetime-local"
                   value={tourniquetTime}
@@ -648,7 +648,7 @@ export default function BattlefieldPage() {
                 />
               </div>
               <div className="lg:col-span-2">
-                <label className="block text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Нотатки</label>
+                <label className="block text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">Нотатки</label>
                 <textarea
                   value={intakeNotes}
                   onChange={(e) => setIntakeNotes(e.target.value)}
@@ -694,11 +694,11 @@ export default function BattlefieldPage() {
                         <button onClick={() => setSelectedZoneId(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white bg-[#262a30] rounded-full p-1"><X className="w-4 h-4"/></button>
                         
                         <h3 className="text-red-500 font-bold tracking-widest text-lg uppercase mb-1">Зона: {selectedZoneData.name}</h3>
-                        <p className="text-gray-500 text-[10px] mb-6 uppercase tracking-widest">{activeView === 'front' ? 'ФРОНТ' : 'ТИЛ'}</p>
+                        <p className="text-gray-500 text-xs mb-6 uppercase tracking-widest">{activeView === 'front' ? 'ФРОНТ' : 'ТИЛ'}</p>
                         
                         <div className="space-y-6">
                            <div>
-                             <label className="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase block mb-3">ТИП УШКОДЖЕННЯ</label>
+                             <label className="text-xs text-gray-400 font-bold tracking-[0.2em] uppercase block mb-3">ТИП УШКОДЖЕННЯ</label>
                              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                                {[
                                  {id: 'ENTRY_WOUND', name: 'ВХІДНЕ'}, {id: 'EXIT_WOUND', name: 'ВИХІДНЕ'},
@@ -720,7 +720,7 @@ export default function BattlefieldPage() {
                            </div>
 
                            <div>
-                             <label className="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase block mb-3">СЕРЙОЗНІСТЬ</label>
+                             <label className="text-xs text-gray-400 font-bold tracking-[0.2em] uppercase block mb-3">СЕРЙОЗНІСТЬ</label>
                              <div className="flex bg-[#111317] rounded border border-[#2a2f3a] overflow-hidden">
                                 {[
                                   {id: 'MINOR', l: 'МІН'}, {id: 'MODERATE', l: 'СЕР'}, 
@@ -729,7 +729,7 @@ export default function BattlefieldPage() {
                                   <button 
                                     key={sev.id} 
                                     onClick={() => setSheetSeverity(sev.id as Severity)} 
-                                    className={`flex-1 py-3 text-[10px] font-bold tracking-wider uppercase border-r border-[#2a2f3a] last:border-0 transition-colors ${sheetSeverity === sev.id ? 'bg-orange-900 text-orange-200' : 'text-gray-500 hover:bg-[#1a1d22]'}`}
+                                    className={`flex-1 py-3 text-xs font-bold tracking-wider uppercase border-r border-[#2a2f3a] last:border-0 transition-colors ${sheetSeverity === sev.id ? 'bg-orange-900 text-orange-200' : 'text-gray-500 hover:bg-[#1a1d22]'}`}
                                   >
                                     {sev.l}
                                   </button>
@@ -745,14 +745,14 @@ export default function BattlefieldPage() {
                   )}
 
                   <div className="bg-[#14171b] border border-[#262a30] rounded-md p-5 flex-1 max-h-[500px] overflow-y-auto">
-                    <h3 className="text-gray-400 text-[10px] font-bold tracking-[0.2em] uppercase mb-4 flex justify-between items-center">
+                    <h3 className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase mb-4 flex justify-between items-center">
                        <span>ЖУРНАЛ ТРАВМ ({activeView === 'front' ? 'ФРОНТ' : 'ТИЛ'})</span>
                        <span className="text-red-500">{injuries.filter(i => i.view === activeView).length} всього</span>
                     </h3>
                     <div className="space-y-3">
                        {injuries.filter(i => i.view === activeView).length === 0 && (
                          <div className="flex flex-col items-center justify-center py-10 text-gray-600 border border-dashed border-[#262a30] rounded">
-                           <p className="text-[10px] font-mono uppercase">Травм не відмічено</p>
+                           <p className="text-xs font-mono uppercase">Травм не відмічено</p>
                          </div>
                        )}
                        {injuries.filter(i => i.view === activeView).map(inj => (
@@ -808,7 +808,7 @@ export default function BattlefieldPage() {
             ← Назад
           </button>
 
-          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+          <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">
             Крок {currentTabIndex + 1} / {tabIds.length}
           </div>
 
@@ -864,7 +864,7 @@ export default function BattlefieldPage() {
           <button 
             onClick={handleSaveCase} 
             disabled={isSaving}
-            className={`flex-1 md:flex-none px-8 py-4 bg-[#8f3d3d] hover:bg-red-800 border border-red-900 rounded text-white font-bold tracking-[0.1em] text-[10px] md:text-xs uppercase flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-colors ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            className={`flex-1 md:flex-none px-8 py-4 bg-blue-700 hover:bg-blue-600 border border-blue-800 rounded text-white font-bold tracking-[0.1em] text-[10px] md:text-xs uppercase flex items-center justify-center gap-2 transition-colors ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <Save className="w-4 h-4" /> {isSaving ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ КЕЙС'}
           </button>
         </div>

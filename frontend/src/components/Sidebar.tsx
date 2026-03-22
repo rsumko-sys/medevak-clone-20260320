@@ -9,26 +9,33 @@ import {
   Box, 
   Droplet, 
   PlaneTakeoff, 
-  RefreshCw, 
-  FileText,
+  Folder,
   ShieldAlert,
+  Download,
+  UploadCloud,
+  ClipboardList,
   Settings
 } from 'lucide-react'
 
 export default function Sidebar() {
   const pathname = usePathname()
   
-  const navItems = [
+  // Operational items (field-use priority)
+  const operationalItems = [
     { name: 'Дашборд', path: '/command', icon: LayoutDashboard },
     { name: 'Пацієнти', path: '/cases', icon: Users },
     { name: 'Медзапаси', path: '/supplies', icon: Box },
     { name: 'Кров', path: '/blood', icon: Droplet },
     { name: 'Евакуація', path: '/evac', icon: PlaneTakeoff },
-    { name: 'Документи', path: '/documents', icon: FileText },
+  ]
+
+  // Administrative / support items
+  const adminItems = [
+    { name: 'Документи', path: '/documents', icon: Folder },
     { name: 'Протоколи', path: '/protocols', icon: ShieldAlert },
-    { name: 'Експорт', path: '/exports', icon: RefreshCw },
-    { name: 'Синхронізація', path: '/sync', icon: RefreshCw },
-    { name: 'Аудит', path: '/audit', icon: FileText },
+    { name: 'Експорт', path: '/exports', icon: Download },
+    { name: 'Синхронізація', path: '/sync', icon: UploadCloud },
+    { name: 'Аудит', path: '/audit', icon: ClipboardList },
     { name: 'Налаштування', path: '/settings', icon: Settings },
   ]
 
@@ -37,30 +44,55 @@ export default function Sidebar() {
       {/* Logo Area */}
       <div className="p-6 border-b border-[#1a1d24]">
         <h1 className="text-xl font-bold tracking-widest leading-tight">КОМАНДНИЙ ЦЕНТР</h1>
-        <p className="text-[10px] text-gray-500 tracking-widest mt-1 uppercase">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
+        <p className="text-xs text-gray-500 tracking-widest mt-1 uppercase">АЗОВ • МЕДИЧНИЙ ПІДРОЗДІЛ</p>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-4">
         <ul className="space-y-1 px-3">
-          {navItems.map((item) => {
+          {operationalItems.map((item) => {
             const isActive = pathname === item.path || pathname?.startsWith(item.path + '/')
             const Icon = item.icon
-            
             return (
               <li key={item.path}>
-                <Link 
+                <Link
                   href={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
-                    isActive 
-                      ? 'bg-[#1e232b] text-white font-medium' 
+                    isActive
+                      ? 'bg-[#1e232b] text-white font-medium'
                       : 'text-gray-400 hover:text-white hover:bg-[#1a1e24]'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
                   {item.name}
                   {isActive && (
-                    <span className="ml-auto w-1 h-4 bg-red-500 rounded-full" />
+                    <span className="ml-auto w-1.5 h-5 bg-red-500 rounded-full" />
+                  )}
+                </Link>
+              </li>
+            )
+          })}
+
+          {/* Separator: operational / admin */}
+          <li aria-hidden="true" className="mx-1 my-2 border-t border-[#1a1d24]" />
+
+          {adminItems.map((item) => {
+            const isActive = pathname === item.path || pathname?.startsWith(item.path + '/')
+            const Icon = item.icon
+            return (
+              <li key={item.path}>
+                <Link
+                  href={item.path}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
+                    isActive
+                      ? 'bg-[#1e232b] text-white font-medium'
+                      : 'text-gray-400 hover:text-white hover:bg-[#1a1e24]'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.name}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-5 bg-red-500 rounded-full" />
                   )}
                 </Link>
               </li>

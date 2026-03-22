@@ -107,6 +107,12 @@ export default function AiTriagePage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+        {/* SAFETY: mock data warning — remove this banner when real AI endpoint is connected */}
+        <div className="border border-yellow-700 bg-yellow-900/30 text-yellow-400 text-xs px-4 py-2 rounded flex items-center gap-2">
+          <span>⚠</span>
+          <span>ДЕМО-РЕЖИМ — ЦІ ДАНІ НЕ Є РЕАЛЬНИМИ AI-РЕКОМЕНДАЦІЯМИ. НЕ ВИКОРИСТОВУЙТЕ ДЛЯ ПРИЙНЯТТЯ МЕДИЧНИХ РІШЕНЬ.</span>
+        </div>
+
         {loading && <div className="wolf-panel p-4">Аналіз AI...</div>}
         
         {error && !loading && (
