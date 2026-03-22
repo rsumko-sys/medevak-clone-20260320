@@ -3,6 +3,7 @@ Production smoke test — MEDEVAK
 Tests: login, logout+blacklist, evac contract, blood persistence
 """
 import urllib.request, urllib.error, json
+from typing import Any
 
 BASE  = "https://medevak-clone-front-clone-20260321.vercel.app"
 EMAIL = "probe.1774204740@test.ua"
@@ -11,7 +12,7 @@ PASS  = "ProbePass2026!"
 PASS_  = []
 FAIL_  = []
 
-def req(method, path, body=None, token=None, label=""):
+def req(method, path, body=None, token=None, label="") -> tuple[int, Any]:
     url = BASE + path
     data = json.dumps(body).encode() if body else None
     headers = {"Content-Type": "application/json"}
@@ -26,18 +27,18 @@ def req(method, path, body=None, token=None, label=""):
     except urllib.error.HTTPError as e:
         try:
             js = json.loads(e.read().decode())
-        except:
+        except Exception:
             js = {}
         print(f"  {e.code}  {method} {path}  [{label}]  detail={js.get('detail','')}")
         return e.code, js
 
-def unwrap(r):
+def unwrap(r: Any) -> Any:
     if isinstance(r, list):
         return r
     return r.get("data", r)
 
-def tokens(r):
-    d = unwrap(r)
+def tokens(r: Any) -> tuple[str, str]:
+    d: dict[str, Any] = unwrap(r)
     return d["access_token"], d["refresh_token"]
 
 def check(label, cond, note=""):

@@ -54,7 +54,7 @@ async def stream_events(
                             "payload": latest.payload,
                             "created_at": (
                                 latest.created_at.isoformat()
-                                if latest.created_at
+                                if latest.created_at is not None
                                 else None
                             ),
                         },
