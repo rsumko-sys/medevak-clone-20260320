@@ -502,34 +502,31 @@ export default function BattlefieldPage() {
         ))}
       </div>
 
-      {/* CPR / cardiac stopwatch — always visible, centered between tabs and content */}
-      <div className="flex justify-center px-4 pt-3 pb-1 bg-[#0b0d10]">
+      {/* CPR / cardiac stopwatch — compact, centered, muted */}
+      <div className="flex justify-center px-4 pt-2 pb-1 bg-[#0b0d10]">
         <button
           onClick={handleSwClick}
-          className={`w-full max-w-2xl flex flex-col items-center justify-center py-4 rounded-xl border-2 font-mono transition-all select-none ${
+          className={`flex items-center gap-3 px-5 py-2 rounded-lg border font-mono transition-all select-none ${
             swState === 'running'
-              ? 'bg-red-950/60 border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.35)]'
+              ? 'bg-red-950/30 border-red-900/60'
               : swState === 'stopped'
-              ? 'bg-[#1a1d24] border-yellow-500'
-              : 'bg-[#14171b] border-[#2a2f3a] hover:border-red-700'
+              ? 'bg-[#1a1d24] border-yellow-900/50'
+              : 'bg-[#12151a] border-[#252930] hover:border-[#3a3f4a]'
           }`}
           title={swState === 'idle' ? 'КПР: старт' : swState === 'running' ? 'КПР: стоп' : 'КПР: скинути'}
         >
-          <span className={`text-[9px] uppercase tracking-[0.3em] font-bold mb-1 ${
-            swState === 'running' ? 'text-red-400' : swState === 'stopped' ? 'text-yellow-400' : 'text-gray-600'
+          <span className={`text-[8px] uppercase tracking-[0.25em] font-bold ${
+            swState === 'running' ? 'text-red-700' : swState === 'stopped' ? 'text-yellow-700' : 'text-gray-700'
           }`}>
-            {swState === 'idle' ? '▶ КПР / СЕКУНДОМІР' : swState === 'running' ? '█ ЗУПИНИТИ' : '↺ СКИНУТИ'}
+            {swState === 'idle' ? '▶ КПР' : swState === 'running' ? '█ СТОП' : '↺ СКИНУТИ'}
           </span>
-          <span className={`text-5xl font-black tabular-nums tracking-widest ${
-            swState === 'running' ? 'text-red-300' : swState === 'stopped' ? 'text-yellow-300' : 'text-gray-600'
+          <span className={`text-2xl font-bold tabular-nums tracking-widest ${
+            swState === 'running' ? 'text-red-600' : swState === 'stopped' ? 'text-yellow-600' : 'text-gray-700'
           }`}>
             {formatSw(swMs)}
           </span>
           {swState === 'running' && (
-            <span className="mt-1 text-[8px] text-red-500/60 uppercase tracking-[0.2em] animate-pulse">РЕАНІМАЦІЯ АКТИВНА</span>
-          )}
-          {swState === 'stopped' && (
-            <span className="mt-1 text-[8px] text-yellow-500/60 uppercase tracking-[0.2em]">НАТИСНІТИ ЩОБ СКИНУТИ</span>
+            <span className="text-[7px] text-red-800 uppercase tracking-[0.15em] animate-pulse">АКТИВНО</span>
           )}
         </button>
       </div>
